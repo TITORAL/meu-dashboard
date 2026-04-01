@@ -11,10 +11,15 @@
         .header { background: #08162c; padding: 25px; font-size: 28px; font-weight: bold; text-align: center; border-bottom: 3px solid #3b82f6; }
         .container { padding: 30px; max-width: 1600px; margin: auto; }
         
-        .status-msg { text-align: center; padding: 10px; font-size: 14px; color: #3b82f6; }
+        .status-msg { text-align: center; padding: 10px; font-size: 12px; color: #3b82f6; opacity: 0.7; }
 
         .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
-        .kpi { background: #142a52; padding: 20px; border-radius: 15px; text-align: center; box-shadow: 0 8px 16px rgba(0,0,0,0.3); border-bottom: 4px solid transparent; }
+        .kpi { 
+            background: #142a52; padding: 20px; border-radius: 15px; text-align: center; 
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3); border-bottom: 4px solid transparent;
+            transition: transform 0.2s; cursor: help;
+        }
+        .kpi:hover { transform: scale(1.02); background: #1c3a6e; }
         .kpi span { font-size: 38px; font-weight: bold; display: block; }
         .label-bottom { font-size: 14px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; display: block; }
 
@@ -28,6 +33,7 @@
         
         .chart-wrapper { flex-grow: 1; width: 100%; position: relative; min-height: 400px; }
 
+        /* Modal */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); }
         .modal-content { background: #142a52; margin: 10% auto; padding: 30px; border: 1px solid #3b82f6; width: 40%; border-radius: 15px; position: relative; }
         .close-btn { position: absolute; right: 20px; top: 10px; font-size: 24px; cursor: pointer; color: #ef4444; }
@@ -42,22 +48,22 @@
     <div class="header">RELACIONAMENTO CLIENTE - PERFORMANCE</div>
 
     <div class="container">
-        <div id="status" class="status-msg">A carregar dados do Google Sheets...</div>
+        <div id="status" class="status-msg">Conectando ao Google Sheets...</div>
 
         <div class="kpis">
-            <div class="kpi">
+            <div class="kpi" title="Todos os clientes da base">
                 <strong class="label-bottom">TOTAL DE CLIENTES</strong>
                 <span id="totalClientes">0</span>
             </div>
-            <div class="kpi excelente">
+            <div class="kpi excelente" id="kpiExcelente">
                 <strong class="label-bottom">EXCELENTE</strong>
                 <span id="countExcelente">0</span>
             </div>
-            <div class="kpi bom">
+            <div class="kpi bom" id="kpiBom">
                 <strong class="label-bottom">BOM</strong>
                 <span id="countBom">0</span>
             </div>
-            <div class="kpi insatisfeito">
+            <div class="kpi insatisfeito" id="kpiInsatisfeito">
                 <strong class="label-bottom">INSATISFEITO</strong>
                 <span id="countInsatisfeito">0</span>
             </div>
@@ -65,7 +71,7 @@
 
         <div class="charts-container">
             <div class="card">
-                <h3>Feedback</h3>
+                <h3>Feedback (Passe o mouse ou clique para ver detalhes)</h3>
                 <div class="chart-wrapper">
                     <canvas id="clienteChart"></canvas>
                 </div>
@@ -92,37 +98,29 @@
         let chartRef;
         let baseDeDados = [];
 
-        // === COLOQUE O SEU LINK ABAIXO ===
-        const URL_PLANILHA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTXkZKTd9HAXueZgAFruapogaLr7t5418U7JhDoSG60attaTbbKqIN5oahDXieJHjMgnnl4T_f4i_wV/pub?output=csv"; 
+        // Substitua pelo seu link do Google Sheets (Publicado como CSV)
+        const URL_PLANILHA = "COLE_AQUI_O_LINK_DO_GOOGLE_SHEETS"; 
 
         window.onload = function() {
             if(URL_PLANILHA.includes("COLE_AQUI")) {
-                document.getElementById("status").innerText = "ERRO: Falta colar o link do Google Sheets no código.";
+                document.getElementById("status").innerText = "Aguardando configuração do link CSV...";
                 return;
             }
 
             fetch(URL_PLANILHA)
-                .then(res => {
-                    if(!res.ok) throw new Error("Erro ao aceder à planilha");
-                    return res.text();
-                })
+                .then(res => res.text())
                 .then(csvText => {
                     Papa.parse(csvText, {
                         header: true,
                         skipEmptyLines: true,
                         complete: function(results) {
-                            if(results.data.length > 0) {
-                                document.getElementById("status").innerText = "Dados atualizados com sucesso!";
-                                processar(results.data);
-                            } else {
-                                document.getElementById("status").innerText = "Planilha lida, mas parece estar vazia.";
-                            }
+                            document.getElementById("status").innerText = "Dados Sincronizados";
+                            processar(results.data);
                         }
                     });
                 })
                 .catch(err => {
-                    document.getElementById("status").innerText = "Erro na ligação: Verifique se publicou a planilha como CSV.";
-                    console.error(err);
+                    document.getElementById("status").innerText = "Erro ao carregar dados.";
                 });
         };
 
@@ -132,7 +130,8 @@
         }
 
         function processar(dados) {
-            let kpi = { exc: 0, bom: 0, ins: 0, visitas: 0 };
+            let listas = { excelente: [], bom: [], insatisfeito: [] };
+            let visitasConcluidas = 0;
             baseDeDados = [];
 
             dados.forEach(row => {
@@ -142,24 +141,38 @@
 
                 if (cliente === "N/A") return;
 
-                if (exp.includes("excelente")) kpi.exc++;
-                else if (exp.includes("bom")) kpi.bom++;
-                else if (exp.includes("insat") || exp.includes("ruim")) kpi.ins++;
+                let categoria = "outro";
+                if (exp.includes("excelente")) {
+                    listas.excelente.push(cliente);
+                    categoria = "excelente";
+                } else if (exp.includes("bom")) {
+                    listas.bom.push(cliente);
+                    categoria = "bom";
+                } else if (exp.includes("insat") || exp.includes("ruim") || exp.includes("cancel")) {
+                    listas.insatisfeito.push(cliente);
+                    categoria = "insatisfeito";
+                }
 
-                if (feedback.length > 5 || exp !== "") kpi.visitas++;
+                if (feedback.length > 5 || exp !== "") visitasConcluidas++;
 
                 baseDeDados.push({
                     nome: cliente,
                     texto: feedback,
-                    cor: exp.includes("excelente") ? "#10b981" : (exp.includes("bom") ? "#3b82f6" : "#ef4444")
+                    cor: categoria === "excelente" ? "#10b981" : (categoria === "bom" ? "#3b82f6" : "#ef4444")
                 });
             });
 
+            // Atualiza Números
             document.getElementById("totalClientes").innerText = baseDeDados.length;
-            document.getElementById("countExcelente").innerText = kpi.exc;
-            document.getElementById("countBom").innerText = kpi.bom;
-            document.getElementById("countInsatisfeito").innerText = kpi.ins;
-            document.getElementById("totalVisitas").innerText = kpi.visitas;
+            document.getElementById("countExcelente").innerText = listas.excelente.length;
+            document.getElementById("countBom").innerText = listas.bom.length;
+            document.getElementById("countInsatisfeito").innerText = listas.insatisfeito.length;
+            document.getElementById("totalVisitas").innerText = visitasConcluidas;
+
+            // ADICIONA TOOLTIP AOS CARTOES (Passar o mouse)
+            document.getElementById("kpiExcelente").title = "Clientes: " + listas.excelente.join(", ");
+            document.getElementById("kpiBom").title = "Clientes: " + listas.bom.join(", ");
+            document.getElementById("kpiInsatisfeito").title = "Clientes: " + listas.insatisfeito.join(", ");
 
             renderizarGrafico();
         }
@@ -187,7 +200,7 @@
                     },
                     plugins: { 
                         legend: { display: false },
-                        tooltip: { callbacks: { label: (item) => baseDeDados[item.dataIndex].texto } }
+                        tooltip: { callbacks: { label: (item) => "Feedback: " + baseDeDados[item.dataIndex].texto } }
                     },
                     onClick: (e, el) => {
                         if (el.length > 0) {
