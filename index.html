@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard de Feedback</title>
+    <title>Dashboard de Feedback - Relacionamento</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 
@@ -11,32 +11,65 @@
         .header { background: #08162c; padding: 25px; font-size: 28px; font-weight: bold; text-align: center; border-bottom: 3px solid #3b82f6; }
         .container { padding: 30px; max-width: 1200px; margin: auto; }
         
-        .status-msg { text-align: center; padding: 15px; font-size: 14px; color: #3b82f6; background: rgba(59, 130, 246, 0.1); border-radius: 8px; margin-bottom: 20px; }
+        .status-msg { text-align: center; padding: 10px; font-size: 12px; color: #3b82f6; opacity: 0.7; }
 
-        .card { background: #142a52; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); min-height: 600px; display: flex; flex-direction: column; }
-        .card h3 { margin: 0 0 20px 0; font-size: 20px; color: #3b82f6; border-left: 4px solid #3b82f6; padding-left: 15px; text-transform: uppercase; }
+        /* Estilo dos KPIs */
+        .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
+        .kpi { 
+            background: #142a52; padding: 20px; border-radius: 15px; text-align: center; 
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3); border-bottom: 4px solid transparent;
+            transition: transform 0.2s; cursor: pointer;
+        }
+        .kpi:hover { transform: scale(1.05); background: #1c3a6e; }
+        .kpi span { font-size: 42px; font-weight: bold; display: block; }
+        .label-bottom { font-size: 14px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; display: block; }
+
+        .excelente { color: #10b981; border-color: #10b981; }
+        .bom { color: #3b82f6; border-color: #3b82f6; }
+        .insatisfeito { color: #ef4444; border-color: #ef4444; }
+
+        .card { background: #142a52; padding: 25px; border-radius: 15px; min-height: 500px; display: flex; flex-direction: column; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
+        .card h3 { margin: 0 0 20px 0; font-size: 20px; color: #3b82f6; border-left: 4px solid #3b82f6; padding-left: 15px; }
         
-        .chart-wrapper { flex-grow: 1; width: 100%; position: relative; }
+        .chart-wrapper { flex-grow: 1; width: 100%; position: relative; min-height: 450px; }
 
-        /* Modal de Detalhes */
+        /* Modal */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); }
-        .modal-content { background: #142a52; margin: 10% auto; padding: 30px; border: 1px solid #3b82f6; width: 50%; border-radius: 15px; position: relative; box-shadow: 0 0 30px rgba(59, 130, 246, 0.3); }
-        .close-btn { position: absolute; right: 20px; top: 10px; font-size: 28px; cursor: pointer; color: #ef4444; }
-        #modalTitle { color: #3b82f6; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
-        #modalBody { line-height: 1.6; font-size: 18px; color: #e2e8f0; }
+        .modal-content { background: #142a52; margin: 8% auto; padding: 30px; border: 1px solid #3b82f6; width: 50%; border-radius: 15px; position: relative; max-height: 70vh; overflow-y: auto; }
+        .close-btn { position: absolute; right: 20px; top: 10px; font-size: 30px; cursor: pointer; color: #ef4444; }
+        
+        #modalTitle { color: #3b82f6; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
+        #modalBody { line-height: 1.6; font-size: 16px; white-space: pre-wrap; }
     </style>
 </head>
 
 <body>
 
-    <div class="header">RELACIONAMENTO CLIENTE - FEEDBACKS</div>
+    <div class="header">RELACIONAMENTO CLIENTE - FEEDBACK</div>
 
     <div class="container">
-        <div id="status" class="status-msg">Iniciando conexão com a base de dados...</div>
+        <div id="status" class="status-msg">Conectando ao Google Sheets...</div>
+
+        <div class="kpis">
+            <div class="kpi excelente" onclick="verClientesPorCategoria('excelente')">
+                <strong class="label-bottom">EXCELENTE</strong>
+                <span id="countExcelente">0</span>
+                <small style="font-size: 10px; opacity: 0.6;">Clique para ver quem são</small>
+            </div>
+            <div class="kpi bom" onclick="verClientesPorCategoria('bom')">
+                <strong class="label-bottom">BOM</strong>
+                <span id="countBom">0</span>
+                <small style="font-size: 10px; opacity: 0.6;">Clique para ver quem são</small>
+            </div>
+            <div class="kpi insatisfeito" onclick="verClientesPorCategoria('insatisfeito')">
+                <strong class="label-bottom">INSATISFEITO</strong>
+                <span id="countInsatisfeito">0</span>
+                <small style="font-size: 10px; opacity: 0.6;">Clique para ver quem são</small>
+            </div>
+        </div>
 
         <div class="card">
-            <h3>Feedbacks dos Clientes</h3>
-            <p style="font-size: 13px; opacity: 0.6; margin-bottom: 15px;">Passe o mouse para ler o resumo ou clique na barra para ver o feedback completo.</p>
+            <h3>Feedbacks Detalhados</h3>
             <div class="chart-wrapper">
                 <canvas id="clienteChart"></canvas>
             </div>
@@ -46,45 +79,39 @@
     <div id="feedbackModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal()">&times;</span>
-            <h2 id="modalTitle">Nome do Cliente</h2>
-            <p id="modalBody">Texto do feedback...</p>
+            <h2 id="modalTitle"></h2>
+            <div id="modalBody"></div>
         </div>
     </div>
 
     <script>
         let chartRef;
         let baseDeDados = [];
+        let categoriasClientes = { excelente: [], bom: [], insatisfeito: [] };
 
-        // === COLOQUE SEU LINK DO GOOGLE SHEETS ABAIXO ===
+        // ATENÇÃO: Substitua pelo seu link do Google Sheets (Publicado como CSV)
         const URL_PLANILHA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTXkZKTd9HAXueZgAFruapogaLr7t5418U7JhDoSG60attaTbbKqIN5oahDXieJHjMgnnl4T_f4i_wV/pub?output=csv"; 
 
         window.onload = function() {
-            if(URL_PLANILHA.includes("COLE_AQUI")) {
-                document.getElementById("status").innerText = "ERRO: O link da planilha não foi configurado no código.";
+            if(URL_PLANILHA.includes("https://docs.google.com/spreadsheets/d/e/2PACX-1vTXkZKTd9HAXueZgAFruapogaLr7t5418U7JhDoSG60attaTbbKqIN5oahDXieJHjMgnnl4T_f4i_wV/pub?output=csv")) {
+                document.getElementById("status").innerText = "Aviso: Link da planilha não configurado.";
                 return;
             }
 
             fetch(URL_PLANILHA)
-                .then(res => {
-                    if(!res.ok) throw new Error();
-                    return res.text();
-                })
+                .then(res => res.text())
                 .then(csvText => {
                     Papa.parse(csvText, {
                         header: true,
                         skipEmptyLines: true,
                         complete: function(results) {
-                            if(results.data.length > 0) {
-                                document.getElementById("status").innerText = "Dados carregados: " + results.data.length + " registros encontrados.";
-                                processar(results.data);
-                            } else {
-                                document.getElementById("status").innerText = "A planilha foi lida, mas não há dados nas linhas.";
-                            }
+                            document.getElementById("status").innerText = "Base de dados carregada.";
+                            processar(results.data);
                         }
                     });
                 })
                 .catch(err => {
-                    document.getElementById("status").innerText = "ERRO DE CONEXÃO: Verifique se a planilha foi 'Publicada na Web' como CSV.";
+                    document.getElementById("status").innerText = "Erro na conexão com o Google Sheets.";
                 });
         };
 
@@ -94,26 +121,34 @@
         }
 
         function processar(dados) {
+            categoriasClientes = { excelente: [], bom: [], insatisfeito: [] };
             baseDeDados = [];
 
             dados.forEach(row => {
                 let cliente = getVal(row, "fantasia") || getVal(row, "cliente") || "N/A";
-                let feedback = getVal(row, "feedback") || getVal(row, "relato") || "Sem feedback registrado.";
+                let feedback = getVal(row, "feedback") || getVal(row, "relato") || "Sem feedback.";
                 let exp = String(getVal(row, "experiência") || getVal(row, "status") || "").toLowerCase();
 
                 if (cliente === "N/A" || cliente === "") return;
 
-                // Define a cor baseada na experiência
-                let corBarra = "#3b82f6"; // Azul padrão
-                if (exp.includes("excelente")) corBarra = "#10b981"; // Verde
-                if (exp.includes("insat") || exp.includes("ruim")) corBarra = "#ef4444"; // Vermelho
+                let corBarra = "#3b82f6";
+                if (exp.includes("excelente")) {
+                    categoriasClientes.excelente.push(cliente);
+                    corBarra = "#10b981";
+                } else if (exp.includes("bom")) {
+                    categoriasClientes.bom.push(cliente);
+                    corBarra = "#3b82f6";
+                } else if (exp.includes("insat") || exp.includes("ruim")) {
+                    categoriasClientes.insatisfeito.push(cliente);
+                    corBarra = "#ef4444";
+                }
 
-                baseDeDados.push({
-                    nome: cliente,
-                    texto: feedback,
-                    cor: corBarra
-                });
+                baseDeDados.push({ nome: cliente, texto: feedback, cor: corBarra });
             });
+
+            document.getElementById("countExcelente").innerText = categoriasClientes.excelente.length;
+            document.getElementById("countBom").innerText = categoriasClientes.bom.length;
+            document.getElementById("countInsatisfeito").innerText = categoriasClientes.insatisfeito.length;
 
             renderizarGrafico();
         }
@@ -127,31 +162,22 @@
                 data: {
                     labels: baseDeDados.map(d => d.nome),
                     datasets: [{
-                        label: 'Clientes',
-                        data: baseDeDados.map(() => 10), // Barras de tamanho igual
+                        data: baseDeDados.map(() => 10), 
                         backgroundColor: baseDeDados.map(d => d.cor),
-                        borderRadius: 5,
-                        barThickness: 25
+                        borderRadius: 5
                     }]
                 },
                 options: {
-                    indexAxis: 'y', // Gráfico horizontal para facilitar leitura dos nomes
+                    indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
                         x: { display: false },
-                        y: { 
-                            ticks: { color: 'white', font: { size: 12 } },
-                            grid: { display: false }
-                        }
+                        y: { ticks: { color: 'white', font: { size: 11 } }, grid: { display: false } }
                     },
                     plugins: { 
                         legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: (context) => "Feedback: " + baseDeDados[context.dataIndex].texto.substring(0, 50) + "..."
-                            }
-                        }
+                        tooltip: { callbacks: { label: (item) => "Ver feedback completo ao clicar" } }
                     },
                     onClick: (e, el) => {
                         if (el.length > 0) {
@@ -163,6 +189,15 @@
                     }
                 }
             });
+        }
+
+        // Função para mostrar a lista de clientes ao clicar no KPI
+        function verClientesPorCategoria(cat) {
+            const lista = categoriasClientes[cat];
+            const titulo = cat.toUpperCase();
+            document.getElementById("modalTitle").innerText = `Clientes com Experiência: ${titulo}`;
+            document.getElementById("modalBody").innerText = lista.length > 0 ? "• " + lista.join("\n• ") : "Nenhum cliente nesta categoria.";
+            document.getElementById("feedbackModal").style.display = "block";
         }
 
         function closeModal() { document.getElementById("feedbackModal").style.display = "none"; }
