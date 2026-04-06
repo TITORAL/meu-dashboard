@@ -147,7 +147,7 @@
 
                 listasPorCategoria.Total.push(cliente);
                 let cor = "#3b82f6";
-                let valor = 4; // Bom
+                let valor = 4; 
                 
                 if (exp.includes("excelente")) { 
                     kpi.exc++; cor = "#10b981"; valor = 8; 
@@ -163,7 +163,6 @@
                 }
 
                 if (feedback.length > 5) kpi.visitas++;
-                // Para o efeito equalizador, criamos um array de dois valores: [-valor, valor]
                 baseDeDados.push({ nome: cliente, data: dataV, texto: feedback, cor: cor, nivel: [-valor, valor] });
             });
 
@@ -182,7 +181,7 @@
             if (chartRef) chartRef.destroy();
 
             const wrapper = document.querySelector('.chart-wrapper');
-            const larguraMinima = baseDeDados.length * 28; // Mais junto (fino)
+            const larguraMinima = baseDeDados.length * 20; // Espaçamento reduzido para acompanhar as barras finas
             wrapper.style.minWidth = larguraMinima < 800 ? "100%" : larguraMinima + "px";
 
             chartRef = new Chart(ctx, {
@@ -192,21 +191,17 @@
                     datasets: [{
                         data: baseDeDados.map(d => d.nivel),
                         backgroundColor: baseDeDados.map(d => d.cor),
-                        borderRadius: 20,
+                        borderRadius: 50, // Pontas totalmente arredondadas
                         borderSkipped: false,
-                        barPercentage: 0.3, // Barra bem fina (estilo equalizador)
-                        categoryPercentage: 0.8
+                        barPercentage: 0.15, // AQUI: Deixa a barra super fina
+                        categoryPercentage: 0.9 
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        y: { 
-                            display: false, 
-                            min: -10, // Centraliza o zero no meio do gráfico
-                            max: 10 
-                        },
+                        y: { display: false, min: -10, max: 10 },
                         x: { 
                             grid: { display: false },
                             ticks: { 
