@@ -2,116 +2,93 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dashboard Vila Velha</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Performance - Vila Velha</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 
     <style>
         :root { 
-            --bg: #0b1f3a; 
-            --card: #142a52; 
-            --blue: #3b82f6; 
-            --text: #f8fafc;
+            --bg: #f1f5f9; 
+            --card: #ffffff; 
+            --blue-corp: #1e40af; 
+            --text-main: #1e293b;
+            --text-sub: #64748b;
+            --border: #e2e8f0;
             --exc: #10b981;
+            --bom: #3b82f6;
             --ins: #ef4444;
         }
-
-        /* Impede rolagem lateral e vertical no corpo para caber tudo na tela */
+        
         body { 
-            margin: 0; font-family: 'Segoe UI', Roboto, sans-serif; 
-            background: var(--bg); color: var(--text); 
-            overflow: hidden; height: 100vh; display: flex; flex-direction: column; 
+            margin: 0; font-family: 'Inter', 'Segoe UI', sans-serif; 
+            background: var(--bg); color: var(--text-main); 
         }
 
         .header { 
-            background: #08162c; padding: 10px; text-align: center; 
-            border-bottom: 2px solid var(--blue); flex-shrink: 0; 
+            background: #ffffff; padding: 20px; text-align: left; 
+            border-bottom: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
-        .titulo-pc { font-size: 16px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
+        .titulo-pc { font-size: 20px; font-weight: 700; color: var(--blue-corp); letter-spacing: -0.5px; }
 
-        .container { 
-            padding: 10px; flex-grow: 1; display: flex; 
-            flex-direction: column; gap: 10px; box-sizing: border-box; 
-        }
+        .container { padding: 20px; max-width: 1400px; margin: auto; }
 
-        /* KPIs compactos para Mobile */
-        .kpis { 
-            display: grid; grid-template-columns: repeat(2, 1fr); 
-            gap: 8px; flex-shrink: 0; 
-        }
+        /* KPIs Estilo Clean */
+        .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
         .kpi { 
-            background: var(--card); padding: 12px; border-radius: 10px; 
-            text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            border-bottom: 3px solid transparent;
+            background: var(--card); padding: 20px; border-radius: 8px; 
+            border: 1px solid var(--border); transition: all 0.2s;
         }
-        .kpi span { font-size: 20px; font-weight: bold; display: block; }
-        .label-bottom { font-size: 9px; text-transform: uppercase; color: #94a3b8; font-weight: bold; }
+        .kpi:hover { border-color: var(--blue-corp); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .kpi span { font-size: 28px; font-weight: 800; display: block; margin-top: 4px; }
+        .label-bottom { font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--text-sub); }
         
-        .kpi.excelente { border-color: var(--exc); color: var(--exc); }
-        .kpi.bom { border-color: var(--blue); color: var(--blue); }
-        .kpi.insatisfeito { border-color: var(--ins); color: var(--ins); }
+        .exc-text { color: var(--exc); }
+        .bom-text { color: var(--bom); }
+        .ins-text { color: var(--ins); }
 
-        /* Área de conteúdo principal */
-        .main-content { 
-            display: flex; flex-direction: column; gap: 10px; 
-            flex-grow: 1; overflow: hidden; 
-        }
+        .main-content { display: grid; grid-template-columns: 1fr; gap: 24px; }
+        @media (min-width: 1024px) { .main-content { grid-template-columns: 3fr 1fr; } }
 
         .card { 
-            background: var(--card); padding: 12px; border-radius: 12px; 
-            box-shadow: 0 8px 20px rgba(0,0,0,0.3); display: flex; 
-            flex-direction: column; justify-content: center;
+            background: var(--card); padding: 24px; border-radius: 12px; 
+            border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-        .card h3 { margin: 0 0 8px 0; font-size: 11px; color: var(--blue); text-transform: uppercase; }
+        .card h3 { margin: 0 0 20px 0; font-size: 14px; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; }
 
-        /* Gráfico Reduzido para Mobile */
-        .chart-container-scroll { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        .chart-wrapper { height: 180px; min-width: 600px; position: relative; }
+        .chart-container-scroll { width: 100%; overflow-x: auto; padding-bottom: 10px; }
+        .chart-wrapper { height: 350px; min-width: 1000px; }
 
-        /* Visitas Compactas */
-        .visitas-box { text-align: center; }
-        .visitas-num { font-size: 42px; font-weight: bold; color: var(--blue); line-height: 1; }
-        .visitas-label { font-size: 10px; color: #94a3b8; font-weight: bold; margin-top: 4px; }
+        /* Visitas Realizadas */
+        .visitas-box { text-align: center; border-left: 4px solid var(--blue-corp); padding-left: 20px; }
+        .visitas-num { font-size: 56px; font-weight: 800; color: var(--blue-corp); }
+        .visitas-label { font-size: 13px; font-weight: 600; color: var(--text-sub); }
 
-        /* Modal */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); }
-        .modal-content { background: var(--card); margin: 20% auto; padding: 20px; width: 85%; border-radius: 15px; border: 1px solid var(--blue); }
-
-        /* Ajustes para Desktop */
-        @media (min-width: 992px) { 
-            .kpis { grid-template-columns: repeat(4, 1fr); } 
-            .main-content { display: grid; grid-template-columns: 2fr 1fr; }
-            .chart-wrapper { height: 300px; }
-            .titulo-pc { font-size: 22px; }
+        /* Modal Empresarial */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); }
+        .modal-content { 
+            background: #fff; margin: 8% auto; padding: 32px; width: 90%; max-width: 500px; 
+            border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
         }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <span class="titulo-pc">Performance Vila Velha</span>
+        <span class="titulo-pc">Relatório de Performance Comercial</span>
     </div>
 
     <div class="container">
         <div class="kpis">
-            <div class="kpi" onclick="showCategory('Total')">
-                <span id="totalClientes">0</span><strong class="label-bottom">Total Clientes</strong>
-            </div>
-            <div class="kpi excelente" onclick="showCategory('Excelente')">
-                <span id="countExcelente">0</span><strong class="label-bottom">Excelente</strong>
-            </div>
-            <div class="kpi bom" onclick="showCategory('Bom')">
-                <span id="countBom">0</span><strong class="label-bottom">Bom</strong>
-            </div>
-            <div class="kpi insatisfeito" onclick="showCategory('Insatisfeito')">
-                <span id="countInsatisfeito">0</span><strong class="label-bottom">Atenção</strong>
-            </div>
+            <div class="kpi" onclick="showCategory('Total')"><strong class="label-bottom">Carteira Total</strong><span id="totalClientes">0</span></div>
+            <div class="kpi" onclick="showCategory('Excelente')"><strong class="label-bottom">Excelente</strong><span id="countExcelente" class="exc-text">0</span></div>
+            <div class="kpi" onclick="showCategory('Bom')"><strong class="label-bottom">Bom</strong><span id="countBom" class="bom-text">0</span></div>
+            <div class="kpi" onclick="showCategory('Insatisfeito')"><strong class="label-bottom">Atenção</strong><span id="countInsatisfeito" class="ins-text">0</span></div>
         </div>
 
         <div class="main-content">
-            <div class="card" style="flex: 2;">
-                <h3>Status por Unidade</h3>
+            <div class="card">
+                <h3>Distribuição de Performance por Unidade/Cliente</h3>
                 <div class="chart-container-scroll">
                     <div class="chart-wrapper">
                         <canvas id="clienteChart"></canvas>
@@ -119,7 +96,8 @@
                 </div>
             </div>
 
-            <div class="card" style="flex: 1;">
+            <div class="card">
+                <h3>Atividade Recente</h3>
                 <div class="visitas-box">
                     <span id="totalVisitas" class="visitas-num">0</span>
                     <div class="visitas-label">VISITAS CONCLUÍDAS</div>
@@ -130,9 +108,9 @@
 
     <div id="feedbackModal" class="modal">
         <div class="modal-content">
-            <h2 id="modalTitle" style="color: var(--blue); font-size: 18px; margin: 0 0 10px 0;"></h2>
-            <div id="modalBody" style="font-size: 14px; color: #cbd5e1; line-height: 1.5;"></div>
-            <button onclick="closeModal()" style="margin-top: 15px; width: 100%; padding: 10px; background: var(--blue); color: #fff; border: none; border-radius: 8px;">Fechar</button>
+            <h2 id="modalTitle" style="color: var(--blue-corp); font-size: 20px; margin-bottom: 8px;"></h2>
+            <div id="modalBody" style="line-height: 1.6; color: var(--text-main); font-size: 15px;"></div>
+            <button onclick="closeModal()" style="margin-top: 24px; padding: 8px 16px; background: var(--blue-corp); color: white; border: none; border-radius: 6px; cursor: pointer;">Fechar</button>
         </div>
     </div>
 
@@ -140,9 +118,10 @@
         let chartRef;
         let baseDeDados = [];
         let listasPorCategoria = { Excelente: [], Bom: [], Insatisfeito: [], Total: [] };
+
         const URL_PLANILHA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTXkZKTd9HAXueZgAFruapogaLr7t5418U7JhDoSG60attaTbbKqIN5oahDXieJHjMgnnl4T_f4i_wV/pub?output=csv";
 
-        window.onload = () => {
+        window.onload = function() {
             fetch(URL_PLANILHA).then(res => res.text()).then(csv => {
                 Papa.parse(csv, { header: true, skipEmptyLines: true, complete: (r) => processar(r.data) });
             });
@@ -154,10 +133,10 @@
             listasPorCategoria = { Excelente: [], Bom: [], Insatisfeito: [], Total: [] };
 
             dados.forEach(row => {
-                const k = Object.keys(row);
-                let cliente = row[k.find(x => x.toLowerCase().includes('fantasia'))] || row[k.find(x => x.toLowerCase().includes('cliente'))];
-                let exp = String(row[k.find(x => x.toLowerCase().includes('experiência'))] || "").toLowerCase();
-                let relato = row[k.find(x => x.toLowerCase().includes('feedback'))] || "Sem relato";
+                const keys = Object.keys(row);
+                let cliente = row[keys.find(k => k.toLowerCase().includes('fantasia'))] || row[keys.find(k => k.toLowerCase().includes('cliente'))];
+                let exp = String(row[keys.find(k => k.toLowerCase().includes('experiência'))] || "").toLowerCase();
+                let feedback = row[keys.find(k => k.toLowerCase().includes('feedback'))] || "Sem relato";
                 
                 if(!cliente) return;
 
@@ -166,11 +145,11 @@
                 else if(exp.includes("insat") || exp.includes("ruim")) { status = "Insatisfeito"; kpi.ins++; }
                 else { kpi.bom++; }
 
-                if(relato.length > 5) kpi.visitas++;
+                if(feedback.length > 5) kpi.visitas++;
                 
                 listasPorCategoria[status].push(cliente);
                 listasPorCategoria.Total.push(cliente);
-                baseDeDados.push({ nome: cliente, status: status, relato: relato });
+                baseDeDados.push({ nome: cliente, status: status, feedback: feedback });
             });
 
             document.getElementById("totalClientes").innerText = baseDeDados.length;
@@ -186,34 +165,47 @@
             const ctx = document.getElementById("clienteChart").getContext("2d");
             if (chartRef) chartRef.destroy();
 
+            // Estilo Empresarial: Altura fixa (10) para todas as barras, a cor define o status
             chartRef = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: baseDeDados.map(d => d.nome),
                     datasets: [{
-                        data: baseDeDados.map(() => 10),
+                        data: baseDeDados.map(() => 10), // Altura padronizada
                         backgroundColor: baseDeDados.map(d => {
                             if(d.status === 'Excelente') return '#10b981';
                             if(d.status === 'Insatisfeito') return '#ef4444';
                             return '#3b82f6';
                         }),
-                        borderRadius: 5,
-                        barPercentage: 0.5
+                        borderRadius: 4,
+                        barPercentage: 0.6, // Barras mais robustas
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        y: { display: false, max: 12 },
-                        x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 9 }, maxRotation: 45 } }
+                        y: { display: false, max: 11 },
+                        x: { 
+                            grid: { display: false },
+                            ticks: { font: { size: 10, weight: '500' }, color: '#64748b' }
+                        }
                     },
-                    plugins: { legend: { display: false } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#1e293b',
+                            padding: 12,
+                            callbacks: {
+                                label: (item) => ` Status: ${baseDeDados[item.dataIndex].status}`
+                            }
+                        }
+                    },
                     onClick: (e, el) => {
                         if (el.length > 0) {
                             const d = baseDeDados[el[0].index];
                             document.getElementById("modalTitle").innerText = d.nome;
-                            document.getElementById("modalBody").innerText = d.relato;
+                            document.getElementById("modalBody").innerText = d.feedback;
                             document.getElementById("feedbackModal").style.display = "block";
                         }
                     }
