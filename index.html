@@ -133,10 +133,9 @@
             if (chartRef) chartRef.destroy();
 
             const wrapper = document.querySelector('.chart-wrapper');
-            const larguraMinima = baseDeDados.length * 40; 
+            const larguraMinima = baseDeDados.length * 45; 
             wrapper.style.minWidth = larguraMinima < 800 ? "100%" : larguraMinima + "px";
 
-            // Estrutura Clusterizada/Empilhada
             chartRef = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -146,24 +145,24 @@
                             label: 'Excelente',
                             data: baseDeDados.map(d => d.categoria === 'Excelente' ? d.valor : 0),
                             backgroundColor: '#10b981',
-                            borderRadius: 4,
-                            barPercentage: 0.2, // Mantém fino
+                            borderRadius: 6,
+                            barPercentage: 0.2, // Atualizado para 0.2
                             categoryPercentage: 0.8
                         },
                         {
                             label: 'Bom',
                             data: baseDeDados.map(d => d.categoria === 'Bom' ? d.valor : 0),
                             backgroundColor: '#3b82f6',
-                            borderRadius: 4,
-                            barPercentage: 0.2,
+                            borderRadius: 6,
+                            barPercentage: 0.2, // Atualizado para 0.2
                             categoryPercentage: 0.8
                         },
                         {
                             label: 'Insatisfeito',
                             data: baseDeDados.map(d => d.categoria === 'Insatisfeito' ? d.valor : 0),
                             backgroundColor: '#ef4444',
-                            borderRadius: 4,
-                            barPercentage: 0.2,
+                            borderRadius: 6,
+                            barPercentage: 0.2, // Atualizado para 0.2
                             categoryPercentage: 0.8
                         }
                     ]
@@ -174,7 +173,7 @@
                     scales: {
                         y: { stacked: true, display: false, min: 0, max: 12 },
                         x: { 
-                            stacked: true, // Define como empilhado (se quiser clusterizado puro, mude para false)
+                            stacked: true,
                             grid: { display: false },
                             ticks: { color: '#94a3b8', font: { size: 9 }, maxRotation: 45, minRotation: 45 } 
                         }
