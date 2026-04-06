@@ -14,25 +14,36 @@
         .titulo-pc { display: block; font-size: 24px; }
         .container { padding: 15px; max-width: 1600px; margin: auto; }
         .status-msg { text-align: center; padding: 5px; font-size: 12px; color: var(--blue); margin-bottom: 10px; opacity: 0.8; }
+        
         .kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
         .kpi { background: var(--card); padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border-bottom: 3px solid transparent; cursor: pointer; transition: 0.3s; }
         .kpi:hover { background: #1c3a6e; transform: translateY(-3px); }
         .kpi span { font-size: 28px; font-weight: bold; display: block; }
         .label-bottom { font-size: 11px; font-weight: bold; text-transform: uppercase; color: #94a3b8; }
+        
         .excelente { color: #10b981; border-color: #10b981; }
         .bom { color: var(--blue); border-color: var(--blue); }
         .insatisfeito { color: #ef4444; border-color: #ef4444; }
+
         .main-content { display: flex; flex-direction: column; gap: 20px; }
-        .card { background: var(--card); padding: 20px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
-        .card h3 { margin: 0 0 15px 0; font-size: 16px; color: var(--blue); text-transform: uppercase; }
-        .chart-container-scroll { width: 100%; overflow-x: auto; }
-        .chart-wrapper { height: 400px; min-width: 800px; position: relative; }
+        .card { background: var(--card); padding: 20px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); display: flex; flex-direction: column; }
+        .card h3 { margin: 0 0 20px 0; font-size: 16px; color: var(--blue); text-transform: uppercase; letter-spacing: 1px; }
+        
+        /* Ajuste do container do gráfico para elegância e centralização */
+        .chart-container-scroll { width: 100%; overflow-x: auto; scrollbar-width: thin; scrollbar-color: var(--blue) transparent; }
+        .chart-wrapper { height: 350px; min-width: 100%; position: relative; margin: 0 auto; }
+
         .visitas-box { padding: 20px; text-align: center; display: flex; flex-direction: column; justify-content: center; height: 100%; }
         .visitas-num { font-size: 70px; font-weight: bold; color: var(--blue); }
+
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(5px); }
         .modal-content { background: var(--card); margin: 15% auto; padding: 25px; width: 85%; max-width: 450px; border-radius: 20px; border: 1px solid var(--blue); position: relative; }
         .close-btn { position: absolute; right: 20px; top: 15px; font-size: 28px; cursor: pointer; color: #64748b; }
-        @media (min-width: 768px) { .kpis { grid-template-columns: repeat(4, 1fr); } .main-content { display: grid; grid-template-columns: 1fr 300px; } }
+
+        @media (min-width: 768px) { 
+            .kpis { grid-template-columns: repeat(4, 1fr); } 
+            .main-content { display: grid; grid-template-columns: 1fr 300px; } 
+        }
     </style>
 </head>
 <body>
@@ -65,7 +76,7 @@
 
         <div class="main-content">
             <div class="card">
-                <h3>Feedback Visual (Altura por Performance)</h3>
+                <h3>FEEDBACK</h3>
                 <div class="chart-container-scroll">
                     <div class="chart-wrapper">
                         <canvas id="clienteChart"></canvas>
@@ -101,7 +112,7 @@
         function formatarDataBR(dataStr) {
             if (!dataStr || dataStr === "N/A") return "Data N/A";
             const data = new Date(dataStr);
-            if (isNaN(data.getTime())) return dataStr; // Se não for data válida, retorna o texto original
+            if (isNaN(data.getTime())) return dataStr;
             return data.toLocaleDateString('pt-BR');
         }
 
@@ -135,7 +146,7 @@
 
                 listasPorCategoria.Total.push(cliente);
                 let cor = "#3b82f6";
-                let altura = 6; // Valor padrão para "Bom"
+                let altura = 6; 
                 
                 if (exp.includes("excelente")) { 
                     kpi.exc++; cor = "#10b981"; altura = 10; 
@@ -168,38 +179,47 @@
             const ctx = document.getElementById("clienteChart").getContext("2d");
             if (chartRef) chartRef.destroy();
 
+            // Ajuste dinâmico da largura conforme número de clientes para manter elegância
+            const wrapper = document.querySelector('.chart-wrapper');
+            if (baseDeDados.length > 15) {
+                wrapper.style.minWidth = (baseDeDados.length * 50) + "px";
+            } else {
+                wrapper.style.minWidth = "100%";
+            }
+
             chartRef = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: baseDeDados.map(d => [d.nome, d.data]), // Nome em cima, data embaixo
+                    labels: baseDeDados.map(d => d.nome), // Removida a data daqui
                     datasets: [{
                         data: baseDeDados.map(d => d.nivel),
                         backgroundColor: baseDeDados.map(d => d.cor),
-                        borderRadius: 8,
-                        barPercentage: 0.7
+                        borderRadius: 20, // Bordas mais arredondadas para parecer pílula/onda
+                        barPercentage: 0.4, // Gráfico mais fino e elegante
+                        categoryPercentage: 0.8
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        y: { 
-                            display: false, 
-                            min: 0, 
-                            max: 12 // Garante que a "onda" tenha teto
-                        },
+                        y: { display: false, min: 0, max: 12 },
                         x: { 
                             grid: { display: false },
                             ticks: { 
                                 color: '#94a3b8', 
-                                font: { size: 10 },
-                                padding: 10
+                                font: { size: 10, weight: 'bold' },
+                                padding: 10,
+                                maxRotation: 45,
+                                minRotation: 45
                             } 
                         }
                     },
                     plugins: { 
                         legend: { display: false },
                         tooltip: {
+                            backgroundColor: '#08162c',
+                            titleColor: '#3b82f6',
                             callbacks: {
                                 title: (items) => baseDeDados[items[0].dataIndex].nome,
                                 label: (item) => "Data: " + baseDeDados[item.dataIndex].data
@@ -212,8 +232,8 @@
                             const d = baseDeDados[i];
                             document.getElementById("modalTitle").innerText = d.nome;
                             document.getElementById("modalBody").innerHTML = `
-                                <div style="color: #3b82f6; font-size: 13px; margin-bottom: 10px; font-weight: bold;">DATA DA VISITA: ${d.data}</div>
-                                <p>${d.texto}</p>
+                                <div style="color: #3b82f6; font-size: 13px; margin-bottom: 10px; font-weight: bold; border-bottom: 1px solid #1c3a6e; padding-bottom: 5px;">DATA DA VISITA: ${d.data}</div>
+                                <p style="margin-top:15px;">${d.texto}</p>
                             `;
                             document.getElementById("feedbackModal").style.display = "block";
                         }
