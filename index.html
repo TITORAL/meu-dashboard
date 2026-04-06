@@ -181,7 +181,7 @@
             if (chartRef) chartRef.destroy();
 
             const wrapper = document.querySelector('.chart-wrapper');
-            const larguraMinima = baseDeDados.length * 20; // Espaçamento reduzido para acompanhar as barras finas
+            const larguraMinima = baseDeDados.length * 15; // Ajustado para barras ultrafinas
             wrapper.style.minWidth = larguraMinima < 800 ? "100%" : larguraMinima + "px";
 
             chartRef = new Chart(ctx, {
@@ -191,10 +191,10 @@
                     datasets: [{
                         data: baseDeDados.map(d => d.nivel),
                         backgroundColor: baseDeDados.map(d => d.cor),
-                        borderRadius: 50, // Pontas totalmente arredondadas
+                        borderRadius: 50, 
                         borderSkipped: false,
-                        barPercentage: 0.15, // AQUI: Deixa a barra super fina
-                        categoryPercentage: 0.9 
+                        barPercentage: 0.1, // AQUI: Ultra fino estilo linha de áudio
+                        categoryPercentage: 0.8 
                     }]
                 },
                 options: {
