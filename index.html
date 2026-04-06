@@ -3,79 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard de Relacionamento</title>
+    <title>Dashboard Vila Velha</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 
     <style>
         :root { --bg: #0b1f3a; --card: #142a52; --blue: #3b82f6; --text: #f8fafc; }
-        
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
-        
-        /* LÓGICA DE TÍTULO DINÂMICO */
         .header { background: #08162c; padding: 15px; font-weight: bold; text-align: center; border-bottom: 3px solid var(--blue); position: sticky; top: 0; z-index: 100; }
-        
         .titulo-pc { display: block; font-size: 24px; }
-        .titulo-mobile { display: none; font-size: 20px; }
-
-        @media (max-width: 768px) {
-            .titulo-pc { display: none; }
-            .titulo-mobile { display: block; }
-        }
-
         .container { padding: 15px; max-width: 1600px; margin: auto; }
         .status-msg { text-align: center; padding: 5px; font-size: 12px; color: var(--blue); margin-bottom: 10px; opacity: 0.8; }
-
-        /* KPIs */
         .kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
-        .kpi { 
-            background: var(--card); padding: 15px; border-radius: 12px; text-align: center; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3); border-bottom: 3px solid transparent; 
-            cursor: pointer; -webkit-tap-highlight-color: transparent; transition: 0.3s;
-        }
+        .kpi { background: var(--card); padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border-bottom: 3px solid transparent; cursor: pointer; transition: 0.3s; }
         .kpi:hover { background: #1c3a6e; transform: translateY(-3px); }
         .kpi span { font-size: 28px; font-weight: bold; display: block; }
         .label-bottom { font-size: 11px; font-weight: bold; text-transform: uppercase; color: #94a3b8; }
-
         .excelente { color: #10b981; border-color: #10b981; }
         .bom { color: var(--blue); border-color: var(--blue); }
         .insatisfeito { color: #ef4444; border-color: #ef4444; }
-
-        /* Estrutura Principal */
         .main-content { display: flex; flex-direction: column; gap: 20px; }
         .card { background: var(--card); padding: 20px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
         .card h3 { margin: 0 0 15px 0; font-size: 16px; color: var(--blue); text-transform: uppercase; }
-        
-        /* Gráfico com Scroll no Mobile */
-        .chart-container-scroll { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        .chart-wrapper { height: 400px; min-width: 600px; position: relative; }
-
+        .chart-container-scroll { width: 100%; overflow-x: auto; }
+        .chart-wrapper { height: 400px; min-width: 800px; position: relative; }
         .visitas-box { padding: 20px; text-align: center; display: flex; flex-direction: column; justify-content: center; height: 100%; }
         .visitas-num { font-size: 70px; font-weight: bold; color: var(--blue); }
-
-        /* Modal */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(5px); }
-        .modal-content { 
-            background: var(--card); margin: 15% auto; padding: 25px; 
-            width: 85%; max-width: 450px; border-radius: 20px; border: 1px solid var(--blue); position: relative;
-        }
+        .modal-content { background: var(--card); margin: 15% auto; padding: 25px; width: 85%; max-width: 450px; border-radius: 20px; border: 1px solid var(--blue); position: relative; }
         .close-btn { position: absolute; right: 20px; top: 15px; font-size: 28px; cursor: pointer; color: #64748b; }
-
-        /* Ajustes para Desktop */
-        @media (min-width: 768px) {
-            .kpis { grid-template-columns: repeat(4, 1fr); }
-            .main-content { display: grid; grid-template-columns: 1fr 300px; }
-            .chart-wrapper { min-width: auto; } 
-            .chart-container-scroll { overflow-x: hidden; }
-        }
+        @media (min-width: 768px) { .kpis { grid-template-columns: repeat(4, 1fr); } .main-content { display: grid; grid-template-columns: 1fr 300px; } }
     </style>
 </head>
-
 <body>
 
     <div class="header">
-        <span class="titulo-pc">PERFORMANCE - CLIENTE</span>
-        <span class="titulo-mobile">PERFORMANCE MOBILE</span>
+        <span class="titulo-pc">PERFORMANCE CLIENTE VILA VELHA</span>
     </div>
 
     <div class="container">
@@ -102,7 +65,7 @@
 
         <div class="main-content">
             <div class="card">
-                <h3>Feedback</h3>
+                <h3>Feedback Visual (Altura por Performance)</h3>
                 <div class="chart-container-scroll">
                     <div class="chart-wrapper">
                         <canvas id="clienteChart"></canvas>
@@ -133,11 +96,16 @@
         let baseDeDados = [];
         let listasPorCategoria = { Excelente: [], Bom: [], Insatisfeito: [], Total: [] };
 
-        // === COLOQUE O SEU LINK CSV ABAIXO ===
         const URL_PLANILHA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTXkZKTd9HAXueZgAFruapogaLr7t5418U7JhDoSG60attaTbbKqIN5oahDXieJHjMgnnl4T_f4i_wV/pub?output=csv"; 
 
+        function formatarDataBR(dataStr) {
+            if (!dataStr || dataStr === "N/A") return "Data N/A";
+            const data = new Date(dataStr);
+            if (isNaN(data.getTime())) return dataStr; // Se não for data válida, retorna o texto original
+            return data.toLocaleDateString('pt-BR');
+        }
+
         window.onload = function() {
-            if(URL_PLANILHA.includes("COLE_AQUI")) return;
             fetch(URL_PLANILHA).then(res => res.text()).then(csv => {
                 Papa.parse(csv, {
                     header: true,
@@ -161,19 +129,29 @@
                 let cliente = getVal(row, "fantasia") || getVal(row, "cliente") || "";
                 let feedback = getVal(row, "feedback") || getVal(row, "relato") || "Sem relato.";
                 let exp = String(getVal(row, "experiência") || getVal(row, "status") || "").toLowerCase();
-                let dataV = getVal(row, "data") || "N/A";
+                let dataV = formatarDataBR(getVal(row, "data"));
 
                 if (!cliente) return;
 
                 listasPorCategoria.Total.push(cliente);
                 let cor = "#3b82f6";
+                let altura = 6; // Valor padrão para "Bom"
                 
-                if (exp.includes("excelente")) { kpi.exc++; cor = "#10b981"; listasPorCategoria.Excelente.push(cliente); }
-                else if (exp.includes("bom")) { kpi.bom++; cor = "#3b82f6"; listasPorCategoria.Bom.push(cliente); }
-                else if (exp.includes("insat") || exp.includes("ruim")) { kpi.ins++; cor = "#ef4444"; listasPorCategoria.Insatisfeito.push(cliente); }
+                if (exp.includes("excelente")) { 
+                    kpi.exc++; cor = "#10b981"; altura = 10; 
+                    listasPorCategoria.Excelente.push(cliente); 
+                }
+                else if (exp.includes("bom")) { 
+                    kpi.bom++; cor = "#3b82f6"; altura = 6; 
+                    listasPorCategoria.Bom.push(cliente); 
+                }
+                else if (exp.includes("insat") || exp.includes("ruim")) { 
+                    kpi.ins++; cor = "#ef4444"; altura = 2; 
+                    listasPorCategoria.Insatisfeito.push(cliente); 
+                }
 
                 if (feedback.length > 5) kpi.visitas++;
-                baseDeDados.push({ nome: cliente, data: dataV, texto: feedback, cor: cor });
+                baseDeDados.push({ nome: cliente, data: dataV, texto: feedback, cor: cor, nivel: altura });
             });
 
             document.getElementById("totalClientes").innerText = baseDeDados.length;
@@ -193,30 +171,38 @@
             chartRef = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: baseDeDados.map(d => d.nome),
+                    labels: baseDeDados.map(d => [d.nome, d.data]), // Nome em cima, data embaixo
                     datasets: [{
-                        data: baseDeDados.map(() => 10),
+                        data: baseDeDados.map(d => d.nivel),
                         backgroundColor: baseDeDados.map(d => d.cor),
-                        borderRadius: 12,
-                        barPercentage: 0.5
+                        borderRadius: 8,
+                        barPercentage: 0.7
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        y: { display: false },
+                        y: { 
+                            display: false, 
+                            min: 0, 
+                            max: 12 // Garante que a "onda" tenha teto
+                        },
                         x: { 
                             grid: { display: false },
-                            ticks: { color: '#94a3b8', font: { size: 10 }, maxRotation: 45, minRotation: 45 } 
+                            ticks: { 
+                                color: '#94a3b8', 
+                                font: { size: 10 },
+                                padding: 10
+                            } 
                         }
                     },
                     plugins: { 
                         legend: { display: false },
                         tooltip: {
                             callbacks: {
-                                title: (items) => baseDeDados[items[0].dataIndex].nome + " | " + baseDeDados[items[0].dataIndex].data,
-                                label: () => "Clique para ver feedback"
+                                title: (items) => baseDeDados[items[0].dataIndex].nome,
+                                label: (item) => "Data: " + baseDeDados[item.dataIndex].data
                             }
                         }
                     },
@@ -226,8 +212,8 @@
                             const d = baseDeDados[i];
                             document.getElementById("modalTitle").innerText = d.nome;
                             document.getElementById("modalBody").innerHTML = `
-                                <div style="color: #3b82f6; font-size: 12px; margin-bottom: 10px;">DATA: ${d.data}</div>
-                                ${d.texto}
+                                <div style="color: #3b82f6; font-size: 13px; margin-bottom: 10px; font-weight: bold;">DATA DA VISITA: ${d.data}</div>
+                                <p>${d.texto}</p>
                             `;
                             document.getElementById("feedbackModal").style.display = "block";
                         }
@@ -238,8 +224,8 @@
 
         function showCategory(cat) {
             const lista = listasPorCategoria[cat];
-            document.getElementById("modalTitle").innerText = "Clientes: " + cat;
-            document.getElementById("modalBody").innerHTML = "• " + lista.join("<br>• ");
+            document.getElementById("modalTitle").innerText = "Lista: " + cat;
+            document.getElementById("modalBody").innerHTML = lista.length > 0 ? "• " + lista.join("<br>• ") : "Nenhum cliente nesta categoria.";
             document.getElementById("feedbackModal").style.display = "block";
         }
 
