@@ -47,7 +47,6 @@
         .visitas-num { font-size: 85px; font-weight: bold; color: var(--blue); line-height: 1; }
         .visitas-label { font-weight: bold; color: #94a3b8; letter-spacing: 3px; font-size: 11px; margin-top: 15px; }
 
-        /* Modal - Ajustado para aparecer na tela toda e não cortar nomes */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); }
         .modal-content { 
             background: var(--card); margin: 5% auto; padding: 25px; 
@@ -87,7 +86,7 @@
             </div>
             <div class="kpi insatisfeito" onclick="showCategory('Insatisfeito')">
                 <span id="countInsatisfeito">0</span>
-                <strong class="label-bottom">Atenção</strong>
+                <strong class="label-bottom">Insatisfeito</strong>
             </div>
         </div>
 
@@ -157,14 +156,22 @@
 
                 if (!cliente) return;
                 listasPorCategoria.Total.push(cliente);
-                let cor = "#3b82f6";
                 
-                if (exp.includes("excelente")) { kpi.exc++; cor = "#10b981"; listasPorCategoria.Excelente.push(cliente); }
-                else if (exp.includes("insat") || exp.includes("ruim")) { kpi.ins++; cor = "#ef4444"; listasPorCategoria.Insatisfeito.push(cliente); }
-                else { kpi.bom++; listasPorCategoria.Bom.push(cliente); }
+                let cor = "#3b82f6";
+                let alturaBarra = 7; // Padrão "Bom"
+
+                if (exp.includes("excelente")) { 
+                    kpi.exc++; cor = "#10b981"; alturaBarra = 10; listasPorCategoria.Excelente.push(cliente); 
+                }
+                else if (exp.includes("insat") || exp.includes("ruim")) { 
+                    kpi.ins++; cor = "#ef4444"; alturaBarra = 4; listasPorCategoria.Insatisfeito.push(cliente); 
+                }
+                else { 
+                    kpi.bom++; cor = "#3b82f6"; alturaBarra = 7; listasPorCategoria.Bom.push(cliente); 
+                }
 
                 if (feedback.length > 5) kpi.visitas++;
-                baseDeDados.push({ nome: cliente, data: dataV, texto: feedback, cor: cor });
+                baseDeDados.push({ nome: cliente, data: dataV, texto: feedback, cor: cor, valor: alturaBarra });
             });
 
             document.getElementById("totalClientes").innerText = baseDeDados.length;
@@ -185,7 +192,7 @@
                 data: {
                     labels: baseDeDados.map(d => d.nome),
                     datasets: [{
-                        data: baseDeDados.map(() => 10),
+                        data: baseDeDados.map(d => d.valor),
                         backgroundColor: baseDeDados.map(d => d.cor),
                         borderRadius: 4,
                         barPercentage: 0.4,
@@ -200,12 +207,7 @@
                         x: { 
                             stacked: true, 
                             grid: { display: false },
-                            ticks: { 
-                                color: '#94a3b8', 
-                                font: { size: 9, weight: '600' }, 
-                                maxRotation: 45, 
-                                minRotation: 45 
-                            } 
+                            ticks: { color: '#94a3b8', font: { size: 9, weight: '600' }, maxRotation: 45, minRotation: 45 } 
                         }
                     },
                     plugins: { 
@@ -227,7 +229,6 @@
             });
         }
 
-        // Ajustado para exibir em múltiplas colunas se necessário e garantir largura total
         function showCategory(cat) {
             const lista = listasPorCategoria[cat];
             document.getElementById("modalTitle").innerText = "Lista de Clientes: " + cat;
