@@ -31,19 +31,23 @@
         .bom { border-color: var(--blue); color: var(--blue); }
         .insatisfeito { border-color: #ef4444; color: #ef4444; }
 
-        /* Layout de Conteúdo - Corrigido para garantir visibilidade */
+        /* Layout de Conteúdo - Ajustado para Alturas Iguais */
         .main-content { display: flex; flex-direction: column; gap: 20px; margin-bottom: 30px; }
-        .card { background: var(--card); padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden; }
+        .card { 
+            background: var(--card); padding: 20px; border-radius: 15px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+            display: flex; flex-direction: column;
+        }
         .card h3 { margin: 0 0 20px 0; font-size: 14px; color: var(--blue); text-transform: uppercase; letter-spacing: 2px; border-left: 4px solid var(--blue); padding-left: 10px; }
         
-        /* Gráfico */
-        .chart-container-scroll { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        .chart-wrapper { height: 350px; position: relative; }
+        /* Gráfico sem rolagem */
+        .chart-container-no-scroll { width: 100%; flex-grow: 1; min-height: 350px; }
+        .chart-wrapper { height: 100%; width: 100%; position: relative; }
 
-        /* Visitas Realizadas */
-        .visitas-box { padding: 20px; text-align: center; background: rgba(255,255,255,0.03); border-radius: 10px; }
-        .visitas-num { font-size: 70px; font-weight: bold; color: var(--blue); line-height: 1; }
-        .visitas-label { font-weight: bold; color: #94a3b8; letter-spacing: 3px; font-size: 11px; margin-top: 10px; }
+        /* Visitas Realizadas - Centralizado e com Altura Igualada */
+        .visitas-content { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .visitas-num { font-size: 85px; font-weight: bold; color: var(--blue); line-height: 1; }
+        .visitas-label { font-weight: bold; color: #94a3b8; letter-spacing: 3px; font-size: 11px; margin-top: 15px; }
 
         /* Modal */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); }
@@ -55,7 +59,12 @@
 
         @media (min-width: 768px) {
             .kpis { grid-template-columns: repeat(4, 1fr); }
-            .main-content { display: grid; grid-template-columns: 1fr 320px; align-items: start; }
+            .main-content { 
+                display: grid; 
+                grid-template-columns: 1fr 320px; 
+                grid-template-rows: 1fr; /* Força altura igual */
+            }
+            .card { height: 450px; } /* Altura fixa igual para ambos os cards */
             .titulo-header { font-size: 24px; }
         }
     </style>
@@ -90,7 +99,7 @@
         <div class="main-content">
             <div class="card">
                 <h3>FEEDBACK</h3>
-                <div class="chart-container-scroll">
+                <div class="chart-container-no-scroll">
                     <div id="wrapper" class="chart-wrapper">
                         <canvas id="clienteChart"></canvas>
                     </div>
@@ -99,7 +108,7 @@
 
             <div class="card">
                 <h3>Visitas Realizadas</h3>
-                <div class="visitas-box">
+                <div class="visitas-content">
                     <span id="totalVisitas" class="visitas-num">0</span>
                     <div class="visitas-label">CONCLUÍDAS</div>
                 </div>
@@ -174,12 +183,6 @@
 
         function renderizarGrafico() {
             const ctx = document.getElementById("clienteChart").getContext("2d");
-            const wrapper = document.getElementById("wrapper");
-            
-            // Largura para scroll mobile
-            const larguraCalculada = baseDeDados.length * 60;
-            wrapper.style.minWidth = larguraCalculada > window.innerWidth ? larguraCalculada + "px" : "100%";
-
             if (chartRef) chartRef.destroy();
 
             chartRef = new Chart(ctx, {
@@ -190,9 +193,8 @@
                         data: baseDeDados.map(() => 10),
                         backgroundColor: baseDeDados.map(d => d.cor),
                         borderRadius: 4,
-                        // AJUSTE DE ESPESSURA (FINO)
-                        barPercentage: 0.3,
-                        categoryPercentage: 0.5
+                        barPercentage: 0.4, // Colunas finas e elegantes
+                        categoryPercentage: 0.8
                     }]
                 },
                 options: {
@@ -201,15 +203,15 @@
                     scales: {
                         y: { 
                             display: false, 
-                            stacked: true, // EMPILHADO
+                            stacked: true, 
                             max: 12 
                         },
                         x: { 
-                            stacked: true, // CLUSTERIZADO
+                            stacked: true, 
                             grid: { display: false },
                             ticks: { 
                                 color: '#94a3b8', 
-                                font: { size: 10, weight: '600' }, 
+                                font: { size: 9, weight: '600' }, 
                                 maxRotation: 45, 
                                 minRotation: 45 
                             } 
@@ -217,12 +219,7 @@
                     },
                     plugins: { 
                         legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                title: (items) => baseDeDados[items[0].dataIndex].nome,
-                                label: (item) => `Visita em: ${baseDeDados[item.dataIndex].data}`
-                            }
-                        }
+                        tooltip: { enabled: true }
                     },
                     onClick: (e, el) => {
                         if (el.length > 0) {
