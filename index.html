@@ -29,8 +29,7 @@
         .card-visitas { background: var(--card); padding: 10px 15px; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.4); display: flex; flex-direction: row; align-items: center; justify-content: space-between; min-height: 60px; }
         
         .chart-container { width: 100%; flex-grow: 1; min-height: 350px; overflow-x: auto; overflow-y: hidden; }
-        /* Largura aumentada para 3500px para garantir que 83 clientes caibam com folga */
-        .chart-wrapper { height: 100%; min-width: 3500px; position: relative; padding-bottom: 20px; } 
+        .chart-wrapper { height: 100%; min-width: 4000px; position: relative; padding-bottom: 20px; } 
 
         .visitas-content { display: flex; align-items: center; gap: 10px; }
         .visitas-num { font-size: 32px; font-weight: bold; color: var(--blue); line-height: 1; }
@@ -38,7 +37,10 @@
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(4px); }
         .modal-content { background: var(--card); margin: 5% auto; padding: 20px; width: 85%; max-width: 800px; max-height: 85vh; border-radius: 15px; border: 1px solid var(--blue); position: relative; overflow-y: auto; }
         .close-btn { position: absolute; right: 15px; top: 10px; font-size: 28px; cursor: pointer; color: #64748b; }
-        .cliente-item-detalhe { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--blue); }
+        
+        .cliente-item-detalhe { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid var(--blue); }
+        .cliente-item-detalhe strong { font-size: 16px; color: var(--blue); display: block; margin-bottom: 5px; }
+        .cliente-item-detalhe p { margin: 3px 0; font-size: 13px; color: #cbd5e1; }
 
         @media (min-width: 768px) {
             .kpis { grid-template-columns: repeat(5, 1fr); gap: 12px; }
@@ -94,7 +96,7 @@
     <div id="feedbackModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal()">&times;</span>
-            <h2 id="modalTitle" style="color: var(--blue); font-size: 18px;"></h2>
+            <h2 id="modalTitle" style="color: var(--blue); font-size: 18px; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px;"></h2>
             <div id="modalBody"></div>
         </div>
     </div>
@@ -112,17 +114,19 @@
             .then(csv => {
                 Papa.parse(csv, { 
                     header: true, 
-                    skipEmptyLines: 'greedy', 
+                    skipEmptyLines: true, // Mudança aqui para garantir que leia linhas com espaços
                     complete: (r) => processar(r.data) 
                 });
             });
         };
 
         function getVal(obj, termo) {
-            const normalizar = (s) => s ? s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim() : "";
+            if (!obj) return "";
+            const normalizar = (s) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
             const termoBusca = normalizar(termo);
             const key = Object.keys(obj).find(k => normalizar(k).includes(termoBusca));
-            return key ? obj[key] : "";
+            let val = key ? obj[key] : "";
+            return val ? val.toString().replace(/"/g, "").trim() : "";
         }
 
         function processar(dados) {
@@ -131,23 +135,20 @@
             listasPorCategoria = { Excelente: [], Bom: [], Insatisfeito: [], Cancelado: [] };
 
             dados.forEach(row => {
-                // Tenta pegar o nome do cliente de várias formas possíveis
-                let cliente = getVal(row, "fantasia") || getVal(row, "cliente") || getVal(row, "nome") || getVal(row, "razao");
+                let cliente = getVal(row, "fantasia") || getVal(row, "cliente") || getVal(row, "nome");
                 
-                // Se não houver nome nenhum na linha, ignora. Caso contrário, processa mesmo sem feedback.
-                if (!cliente || cliente.toString().trim() === "") return;
+                // Se não houver nome, ignora, mas se houver qualquer coisa, processa.
+                if (!cliente) return;
 
-                let feedbackTexto = getVal(row, "feedback") || getVal(row, "relato") || "";
-                
                 let info = {
-                    nome: cliente.toString().trim(),
+                    nome: cliente,
                     endereco: getVal(row, "endereco") || "Não informado",
                     numero: getVal(row, "numero") || "S/N",
                     bairro: getVal(row, "bairro") || "Não informado",
                     celular: getVal(row, "celular") || "Não informado",
                     cpf: getVal(row, "cpf") || getVal(row, "cnpj") || "Não informado",
-                    abertura: getVal(row, "abertura") || "Não informado",
-                    feedback: feedbackTexto || "Sem feedback registrado.",
+                    abertura: getVal(row, "abertura") || "---",
+                    feedback: getVal(row, "feedback") || getVal(row, "relato") || "Sem feedback.",
                     data: getVal(row, "data") || "---"
                 };
 
@@ -162,11 +163,10 @@
                 } else if (exp.includes("insat") || exp.includes("ruim") || exp.includes("pessimo")) { 
                     kpi.ins++; cor = "#ef4444"; alturaBarra = 4; listasPorCategoria.Insatisfeito.push(info); 
                 } else { 
-                    // Padrão para qualquer cliente (incluindo os que não tem status preenchido)
                     kpi.bom++; cor = "#3b82f6"; alturaBarra = 7; listasPorCategoria.Bom.push(info); 
                 }
 
-                if (feedbackTexto.length > 3) kpi.visitas++;
+                if (info.feedback.length > 3 && info.feedback !== "Sem feedback.") kpi.visitas++;
                 baseDeDados.push({ ...info, cor: cor, valor: alturaBarra });
             });
 
@@ -190,14 +190,14 @@
                     datasets: [{
                         data: baseDeDados.map(d => d.valor),
                         backgroundColor: baseDeDados.map(d => d.cor),
-                        borderRadius: 3, barPercentage: 0.9, categoryPercentage: 0.9
+                        borderRadius: 2
                     }]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     scales: {
                         y: { display: false, max: 12 },
-                        x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 8 }, maxRotation: 90, minRotation: 90, autoSkip: false } }
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 7 }, maxRotation: 90, minRotation: 90, autoSkip: false } }
                     },
                     plugins: { legend: { display: false } },
                     onClick: (e, el) => {
@@ -215,16 +215,23 @@
         function showCategory(cat) {
             const lista = listasPorCategoria[cat];
             document.getElementById("modalTitle").innerText = "Lista Detalhada: " + cat;
-            let html = lista.length ? "" : "<p style='padding:20px; text-align:center;'>Nenhum registro encontrado.</p>";
-            lista.forEach(item => {
-                html += `
-                    <div class="cliente-item-detalhe">
-                        <strong>${item.nome}</strong>
-                        <p>📍 Endereço: ${item.endereco}, ${item.numero} - ${item.bairro}</p>
-                        <p>📱 Celular: ${item.celular} | 📄 CPF: ${item.cpf}</p>
-                        <p>📅 Abertura: ${item.abertura}</p>
-                    </div>`;
-            });
+            let html = "";
+            if (lista.length === 0) {
+                html = "<p style='text-align:center; padding:20px;'>Nenhum cliente nesta categoria.</p>";
+            } else {
+                lista.forEach(item => {
+                    html += `
+                        <div class="cliente-item-detalhe">
+                            <strong>${item.nome}</strong>
+                            <p>📍 Endereço: ${item.endereco}</p>
+                            <p>🔢 Número: ${item.numero}</p>
+                            <p>🏘️ Bairro: ${item.bairro}</p>
+                            <p>📱 Celular: ${item.celular}</p>
+                            <p>📄 CPF/CNPJ: ${item.cpf}</p>
+                            <p>📅 Abertura: ${item.abertura}</p>
+                        </div>`;
+                });
+            }
             document.getElementById("modalBody").innerHTML = html;
             document.getElementById("feedbackModal").style.display = "block";
         }
