@@ -27,11 +27,10 @@
         .main-content { display: flex; flex-direction: column; gap: 12px; }
         .card-feedback { background: var(--card); padding: 15px; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.4); display: flex; flex-direction: column; min-height: 420px; }
         .card-visitas { background: var(--card); padding: 10px 15px; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.4); display: flex; flex-direction: row; align-items: center; justify-content: space-between; min-height: 60px; }
-        .card h3 { margin: 0; font-size: 11px; color: var(--blue); text-transform: uppercase; letter-spacing: 1px; border-left: 3px solid var(--blue); padding-left: 8px; }
         
         .chart-container { width: 100%; flex-grow: 1; min-height: 350px; overflow-x: auto; overflow-y: hidden; }
-        /* Largura aumentada para acomodar 83 colunas sem espremer */
-        .chart-wrapper { height: 100%; min-width: 2500px; position: relative; padding-bottom: 20px; } 
+        /* Largura aumentada para 3500px para garantir que 83 clientes caibam com folga */
+        .chart-wrapper { height: 100%; min-width: 3500px; position: relative; padding-bottom: 20px; } 
 
         .visitas-content { display: flex; align-items: center; gap: 10px; }
         .visitas-num { font-size: 32px; font-weight: bold; color: var(--blue); line-height: 1; }
@@ -46,7 +45,6 @@
             .main-content { display: grid; grid-template-columns: 1fr 280px; grid-template-rows: 480px; }
             .card-visitas { flex-direction: column; justify-content: center; min-height: 480px; }
             .visitas-num { font-size: 100px; }
-            .visitas-content { flex-direction: column; flex-grow: 1; }
             .chart-wrapper { min-width: 100%; } 
         }
     </style>
@@ -84,10 +82,10 @@
                 </div>
             </div>
             <div class="card card-visitas">
-                <h3>Visitas Técnicas</h3>
+                <h3 style="margin: 0; font-size: 11px; color: var(--blue); text-transform: uppercase; border-left: 3px solid var(--blue); padding-left: 8px;">Visitas Técnicas</h3>
                 <div class="visitas-content">
                     <span id="totalVisitas" class="visitas-num">0</span>
-                    <div class="visitas-label">CONCLUÍDAS</div>
+                    <div class="visitas-label" style="font-weight: bold; color: #94a3b8; font-size: 9px;">CONCLUÍDAS</div>
                 </div>
             </div>
         </div>
@@ -114,15 +112,14 @@
             .then(csv => {
                 Papa.parse(csv, { 
                     header: true, 
-                    skipEmptyLines: 'greedy', // Garante que leia até a última linha com dados
+                    skipEmptyLines: 'greedy', 
                     complete: (r) => processar(r.data) 
                 });
             });
         };
 
-        // Função de busca de coluna ultra-flexível (ignora acentos, espaços e caixa alta/baixa)
         function getVal(obj, termo) {
-            const normalizar = (s) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+            const normalizar = (s) => s ? s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim() : "";
             const termoBusca = normalizar(termo);
             const key = Object.keys(obj).find(k => normalizar(k).includes(termoBusca));
             return key ? obj[key] : "";
@@ -134,18 +131,23 @@
             listasPorCategoria = { Excelente: [], Bom: [], Insatisfeito: [], Cancelado: [] };
 
             dados.forEach(row => {
-                let cliente = getVal(row, "fantasia") || getVal(row, "cliente") || getVal(row, "nome");
+                // Tenta pegar o nome do cliente de várias formas possíveis
+                let cliente = getVal(row, "fantasia") || getVal(row, "cliente") || getVal(row, "nome") || getVal(row, "razao");
+                
+                // Se não houver nome nenhum na linha, ignora. Caso contrário, processa mesmo sem feedback.
                 if (!cliente || cliente.toString().trim() === "") return;
 
+                let feedbackTexto = getVal(row, "feedback") || getVal(row, "relato") || "";
+                
                 let info = {
                     nome: cliente.toString().trim(),
-                    endereco: getVal(row, "endereco") || "---",
-                    numero: getVal(row, "numero") || "---",
-                    bairro: getVal(row, "bairro") || "---",
-                    celular: getVal(row, "celular") || "---",
-                    cpf: getVal(row, "cpf") || getVal(row, "cnpj") || "---",
-                    abertura: getVal(row, "abertura") || "---",
-                    feedback: getVal(row, "feedback") || getVal(row, "relato") || "Sem relato.",
+                    endereco: getVal(row, "endereco") || "Não informado",
+                    numero: getVal(row, "numero") || "S/N",
+                    bairro: getVal(row, "bairro") || "Não informado",
+                    celular: getVal(row, "celular") || "Não informado",
+                    cpf: getVal(row, "cpf") || getVal(row, "cnpj") || "Não informado",
+                    abertura: getVal(row, "abertura") || "Não informado",
+                    feedback: feedbackTexto || "Sem feedback registrado.",
                     data: getVal(row, "data") || "---"
                 };
 
@@ -160,10 +162,11 @@
                 } else if (exp.includes("insat") || exp.includes("ruim") || exp.includes("pessimo")) { 
                     kpi.ins++; cor = "#ef4444"; alturaBarra = 4; listasPorCategoria.Insatisfeito.push(info); 
                 } else { 
+                    // Padrão para qualquer cliente (incluindo os que não tem status preenchido)
                     kpi.bom++; cor = "#3b82f6"; alturaBarra = 7; listasPorCategoria.Bom.push(info); 
                 }
 
-                if (info.feedback.length > 5) kpi.visitas++;
+                if (feedbackTexto.length > 3) kpi.visitas++;
                 baseDeDados.push({ ...info, cor: cor, valor: alturaBarra });
             });
 
@@ -212,7 +215,7 @@
         function showCategory(cat) {
             const lista = listasPorCategoria[cat];
             document.getElementById("modalTitle").innerText = "Lista Detalhada: " + cat;
-            let html = lista.length ? "" : "<p>Nenhum registro.</p>";
+            let html = lista.length ? "" : "<p style='padding:20px; text-align:center;'>Nenhum registro encontrado.</p>";
             lista.forEach(item => {
                 html += `
                     <div class="cliente-item-detalhe">
