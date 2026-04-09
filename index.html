@@ -22,6 +22,7 @@
         .kpi { 
             background: var(--card); padding: 12px 5px; border-radius: 10px; text-align: center; 
             box-shadow: 0 4px 10px rgba(0,0,0,0.3); border-bottom: 3px solid transparent; 
+            cursor: pointer;
         }
         .kpi span { font-size: 26px; font-weight: bold; display: block; }
         .label-bottom { font-size: 10px; font-weight: bold; text-transform: uppercase; color: #94a3b8; margin-top: 4px; display: block; }
@@ -63,7 +64,6 @@
         }
         .close-btn { position: absolute; right: 15px; top: 10px; font-size: 28px; cursor: pointer; color: #64748b; padding: 5px; }
 
-        /* Estilo para lista detalhada de clientes */
         .cliente-item-detalhe { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--blue); }
         .cliente-item-detalhe strong { color: var(--blue); display: block; font-size: 16px; margin-bottom: 5px; }
         .cliente-item-detalhe p { margin: 2px 0; font-size: 13px; color: #cbd5e1; }
@@ -86,7 +86,7 @@
 
     <div class="container">
         <div class="kpis">
-            <div class="kpi" onclick="showCategory('Total')">
+            <div class="kpi" style="cursor: default;">
                 <span id="totalClientes">0</span>
                 <strong class="label-bottom">Clientes</strong>
             </div>
@@ -139,7 +139,7 @@
     <script>
         let chartRef;
         let baseDeDados = [];
-        let listasPorCategoria = { Excelente: [], Bom: [], Insatisfeito: [], Cancelado: [], Total: [] };
+        let listasPorCategoria = { Excelente: [], Bom: [], Insatisfeito: [], Cancelado: [] };
 
         const URL_PLANILHA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTXkZKTd9HAXueZgAFruapogaLr7t5418U7JhDoSG60attaTbbKqIN5oahDXieJHjMgnnl4T_f4i_wV/pub?output=csv"; 
 
@@ -164,11 +164,14 @@
         function processar(dados) {
             let kpi = { exc: 0, bom: 0, ins: 0, can: 0, visitas: 0 };
             baseDeDados = [];
-            listasPorCategoria = { Excelente: [], Bom: [], Insatisfeito: [], Cancelado: [], Total: [] };
+            listasPorCategoria = { Excelente: [], Bom: [], Insatisfeito: [], Cancelado: [] };
+            let totalReal = 0;
 
             dados.forEach(row => {
                 let cliente = getVal(row, "fantasia") || getVal(row, "cliente") || "";
                 if (!cliente) return;
+                
+                totalReal++;
 
                 let info = {
                     nome: cliente,
@@ -182,8 +185,6 @@
                     data: formatarDataBR(getVal(row, "data"))
                 };
 
-                listasPorCategoria.Total.push(info);
-                
                 let exp = String(getVal(row, "experiência") || getVal(row, "status") || "").toLowerCase();
                 let cor = "#3b82f6";
                 let alturaBarra = 7;
@@ -202,7 +203,7 @@
                 baseDeDados.push({ ...info, cor: cor, valor: alturaBarra });
             });
 
-            document.getElementById("totalClientes").innerText = listasPorCategoria.Total.length;
+            document.getElementById("totalClientes").innerText = totalReal;
             document.getElementById("countExcelente").innerText = kpi.exc;
             document.getElementById("countBom").innerText = kpi.bom;
             document.getElementById("countInsatisfeito").innerText = kpi.ins;
@@ -257,7 +258,7 @@
                         <p>📍 Endereço: ${item.endereco}, ${item.numero}</p>
                         <p>🏘️ Bairro: ${item.bairro}</p>
                         <p>📱 Celular: ${item.celular}</p>
-                        <p>📄 CPF: ${item.cpf}</p>
+                        <p>📄 CPF/CNPJ: ${item.cpf}</p>
                         <p>📅 Abertura: ${item.abertura}</p>
                     </div>
                 `;
