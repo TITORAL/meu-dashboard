@@ -9,14 +9,13 @@
 
     <style>
         :root { --bg: #0b1f3a; --card: #142a52; --blue: #3b82f6; --text: #f8fafc; }
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
-        .header { background: #08162c; padding: 12px; text-align: center; border-bottom: 3px solid var(--blue); position: sticky; top: 0; z-index: 100; }
-        .titulo-header { font-size: 16px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        body { margin: 0; font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
+        .header { background: #08162c; padding: 12px; font-weight: bold; text-align: center; border-bottom: 3px solid var(--blue); position: sticky; top: 0; z-index: 100; }
+        .titulo-header { display: block; font-size: 16px; letter-spacing: 1px; text-transform: uppercase; }
         .container { padding: 10px; max-width: 1600px; margin: auto; }
 
         .kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 15px; }
-        .kpi { background: var(--card); padding: 12px 5px; border-radius: 10px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border-bottom: 3px solid transparent; cursor: pointer; transition: 0.2s; }
-        .kpi:active { transform: scale(0.95); }
+        .kpi { background: var(--card); padding: 12px 5px; border-radius: 10px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border-bottom: 3px solid transparent; cursor: pointer; }
         .kpi span { font-size: 26px; font-weight: bold; display: block; }
         .label-bottom { font-size: 10px; font-weight: bold; text-transform: uppercase; color: #94a3b8; margin-top: 4px; display: block; }
 
@@ -29,24 +28,22 @@
         .card-feedback { background: var(--card); padding: 15px; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.4); display: flex; flex-direction: column; min-height: 420px; }
         
         .chart-container { width: 100%; flex-grow: 1; min-height: 350px; overflow-x: auto; overflow-y: hidden; }
-        /* Largura dinâmica para 83+ clientes */
-        .chart-wrapper { height: 100%; min-width: 4500px; position: relative; padding-bottom: 20px; } 
+        .chart-wrapper { height: 100%; min-width: 3800px; position: relative; padding-bottom: 20px; } 
 
-        .visitas-content { display: flex; align-items: center; gap: 10px; }
-        .visitas-num { font-size: 32px; font-weight: bold; color: var(--blue); }
-        
+        .visitas-content { display: flex; align-items: center; justify-content: center; background: var(--card); padding: 20px; border-radius: 12px; border-right: 4px solid var(--blue); }
+        .visitas-num { font-size: 48px; font-weight: bold; color: var(--blue); margin-right: 15px; }
+
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(4px); }
         .modal-content { background: var(--card); margin: 5% auto; padding: 20px; width: 85%; max-width: 800px; max-height: 85vh; border-radius: 15px; border: 1px solid var(--blue); position: relative; overflow-y: auto; }
         .close-btn { position: absolute; right: 15px; top: 10px; font-size: 28px; cursor: pointer; color: #64748b; }
-        
-        .cliente-item-detalhe { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid var(--blue); }
-        .cliente-item-detalhe strong { color: var(--blue); display: block; margin-bottom: 5px; }
+        .cliente-item-detalhe { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid var(--blue); }
 
         @media (min-width: 768px) {
             .kpis { grid-template-columns: repeat(5, 1fr); gap: 12px; }
-            .main-content { display: grid; grid-template-columns: 1fr 280px; }
+            .main-content { display: grid; grid-template-columns: 1fr 300px; }
             .chart-wrapper { min-width: 100%; } 
-            .visitas-num { font-size: 80px; }
+            .visitas-content { flex-direction: column; height: 100%; }
+            .visitas-num { font-size: 80px; margin: 0; }
         }
     </style>
 </head>
@@ -62,14 +59,14 @@
         </div>
         <div class="main-content">
             <div class="card card-feedback">
-                <h3 style="margin:0 0 10px 0; font-size:12px; color:var(--blue);">FEEDBACK DETALHADO (CLIQUE NA BARRA)</h3>
+                <h3 style="color:var(--blue); font-size:12px; margin-top:0;">GRÁFICO DE SATISFAÇÃO (83 CLIENTES)</h3>
                 <div class="chart-container">
                     <div class="chart-wrapper"><canvas id="clienteChart"></canvas></div>
                 </div>
             </div>
-            <div style="background:var(--card); padding:20px; border-radius:12px; text-align:center;">
-                <h3 style="font-size:11px; color:var(--blue); margin:0;">VISITAS CONCLUÍDAS</h3>
+            <div class="visitas-content">
                 <span id="totalVisitas" class="visitas-num">0</span>
+                <div style="text-align:center; font-weight:bold; color:#94a3b8; font-size:12px;">VISITAS<br>CONCLUÍDAS</div>
             </div>
         </div>
     </div>
@@ -77,7 +74,7 @@
     <div id="feedbackModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal()">&times;</span>
-            <h2 id="modalTitle" style="color:var(--blue); font-size:18px; border-bottom:1px solid #333; padding-bottom:10px;"></h2>
+            <h2 id="modalTitle" style="color: var(--blue); font-size: 18px; margin-bottom:15px; border-bottom:1px solid #333; padding-bottom:10px;"></h2>
             <div id="modalBody"></div>
         </div>
     </div>
@@ -87,13 +84,13 @@
         let baseDeDados = [];
         let listasPorCategoria = { Excelente: [], Bom: [], Insatisfeito: [], Cancelado: [] };
 
+        // URL da sua planilha publicada como CSV
         const URL_PLANILHA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTXkZKTd9HAXueZgAFruapogaLr7t5418U7JhDoSG60attaTbbKqIN5oahDXieJHjMgnnl4T_f4i_wV/pub?output=csv"; 
 
         window.onload = () => {
             fetch(URL_PLANILHA).then(res => res.text()).then(csv => {
                 Papa.parse(csv, { 
                     header: true, 
-                    dynamicTyping: true,
                     skipEmptyLines: true,
                     complete: (r) => processar(r.data) 
                 });
@@ -101,7 +98,6 @@
         };
 
         function getVal(obj, termo) {
-            if (!obj) return "";
             const keys = Object.keys(obj);
             const key = keys.find(k => k.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(termo.toLowerCase()));
             return key ? String(obj[key]).trim() : "";
@@ -113,28 +109,37 @@
             let kpi = { exc: 0, bom: 0, ins: 0, can: 0, visitas: 0 };
 
             dados.forEach(row => {
-                // Pega qualquer coluna que pareça o nome do cliente se as principais falharem
-                let nome = getVal(row, "fantasia") || getVal(row, "cliente") || getVal(row, "nome") || Object.values(row)[0];
-                if (!nome || nome === "null" || nome === "undefined") return;
+                // Mapeamento exato conforme o seu arquivo Git
+                let nomeFantasia = getVal(row, "Fantasia");
+                let nomeCliente = getVal(row, "Nome do cliente");
+                let nomeFinal = nomeFantasia || nomeCliente;
+
+                if (!nomeFinal || nomeFinal === "") return;
+
+                let feedback = getVal(row, "Feedback") || "Sem feedback registrado.";
+                let exp = getVal(row, "Experiencia").toLowerCase();
 
                 let info = {
-                    nome: nome,
-                    endereco: getVal(row, "endereco") || "Não informado",
-                    bairro: getVal(row, "bairro") || "Não informado",
-                    celular: getVal(row, "celular") || "---",
-                    feedback: getVal(row, "feedback") || getVal(row, "relato") || "Sem feedback.",
-                    data: getVal(row, "data") || "---"
+                    nome: nomeFinal,
+                    bairro: getVal(row, "Bairro") || "---",
+                    celular: getVal(row, "Celular") || "---",
+                    feedback: feedback,
+                    data: getVal(row, "Data") || "---"
                 };
 
-                let status = String(getVal(row, "experiencia") || getVal(row, "status")).toLowerCase();
                 let cor = "#3b82f6"; let valor = 7;
 
-                if (status.includes("cancel")) { kpi.can++; cor="#64748b"; valor=2; listasPorCategoria.Cancelado.push(info); }
-                else if (status.includes("excelente")) { kpi.exc++; cor="#10b981"; valor=10; listasPorCategoria.Excelente.push(info); }
-                else if (status.includes("insat") || status.includes("ruim")) { kpi.ins++; cor="#ef4444"; valor=4; listasPorCategoria.Insatisfeito.push(info); }
-                else { kpi.bom++; listasPorCategoria.Bom.push(info); } // Todos os outros caem aqui
+                if (exp.includes("cancel")) { 
+                    kpi.can++; cor="#64748b"; valor=2; listasPorCategoria.Cancelado.push(info); 
+                } else if (exp.includes("excelente")) { 
+                    kpi.exc++; cor="#10b981"; valor=10; listasPorCategoria.Excelente.push(info); 
+                } else if (exp.includes("insat") || exp.includes("ruim")) { 
+                    kpi.ins++; cor="#ef4444"; valor=4; listasPorCategoria.Insatisfeito.push(info); 
+                } else { 
+                    kpi.bom++; listasPorCategoria.Bom.push(info); 
+                }
 
-                if (info.feedback.length > 3 && info.feedback !== "Sem feedback.") kpi.visitas++;
+                if (feedback.length > 5 && feedback !== "Sem feedback registrado.") kpi.visitas++;
                 baseDeDados.push({ ...info, cor, valor });
             });
 
@@ -155,20 +160,24 @@
                 type: 'bar',
                 data: {
                     labels: baseDeDados.map(d => d.nome),
-                    datasets: [{ data: baseDeDados.map(d => d.valor), backgroundColor: baseDeDados.map(d => d.cor), borderRadius: 2 }]
+                    datasets: [{
+                        data: baseDeDados.map(d => d.valor),
+                        backgroundColor: baseDeDados.map(d => d.cor),
+                        borderRadius: 2
+                    }]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    scales: { 
-                        y: { display: false, max: 12 }, 
-                        x: { ticks: { color: '#94a3b8', font: { size: 8 }, maxRotation: 90, minRotation: 90, autoSkip: false } } 
+                    scales: {
+                        y: { display: false, max: 12 },
+                        x: { ticks: { color: '#94a3b8', font: { size: 7 }, maxRotation: 90, minRotation: 90, autoSkip: false } }
                     },
                     plugins: { legend: { display: false } },
                     onClick: (e, el) => {
                         if (el.length > 0) {
                             const d = baseDeDados[el[0].index];
                             document.getElementById("modalTitle").innerText = d.nome;
-                            document.getElementById("modalBody").innerHTML = `<p><b>Data:</b> ${d.data}</p><p>${d.feedback}</p>`;
+                            document.getElementById("modalBody").innerHTML = `<p style="color:var(--blue)"><b>Data:</b> ${d.data}</p><p>${d.feedback}</p>`;
                             document.getElementById("feedbackModal").style.display = "block";
                         }
                     }
@@ -178,16 +187,23 @@
 
         function showCategory(cat) {
             const lista = listasPorCategoria[cat];
-            document.getElementById("modalTitle").innerText = "Lista: " + cat;
-            let html = lista.length ? "" : "<p style='text-align:center;'>Nenhum cliente.</p>";
+            document.getElementById("modalTitle").innerText = "Listagem: " + cat;
+            let html = lista.length ? "" : "<p style='text-align:center;'>Nenhum cliente nesta categoria.</p>";
+            
             lista.forEach(i => {
-                html += `<div class="cliente-item-detalhe"><strong>${i.nome}</strong><p>📍 ${i.endereco} - ${i.bairro}</p><p>📱 ${i.celular}</p></div>`;
+                html += `
+                    <div class="cliente-item-detalhe">
+                        <strong>${i.nome}</strong>
+                        <p>📍 Bairro: ${i.bairro} | 📱 Celular: ${i.celular}</p>
+                    </div>`;
             });
+            
             document.getElementById("modalBody").innerHTML = html;
             document.getElementById("feedbackModal").style.display = "block";
         }
 
         function closeModal() { document.getElementById("feedbackModal").style.display = "none"; }
+        window.onclick = (e) => { if (e.target.className === 'modal') closeModal(); }
     </script>
 </body>
 </html>
