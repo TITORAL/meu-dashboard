@@ -3,15 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PERFORMANCE CLIENTE VILA VELHA</title>
+    <title>DASHBOARD VILA VELHA</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 
     <style>
         :root { --bg: #0b1f3a; --card: #142a52; --blue: #3b82f6; --text: #f8fafc; }
-        body { margin: 0; font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
-        .header { background: #08162c; padding: 12px; font-weight: bold; text-align: center; border-bottom: 3px solid var(--blue); position: sticky; top: 0; z-index: 100; }
-        .titulo-header { display: block; font-size: 16px; letter-spacing: 1px; text-transform: uppercase; }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
+        .header { background: #08162c; padding: 12px; text-align: center; border-bottom: 3px solid var(--blue); position: sticky; top: 0; z-index: 100; }
         .container { padding: 10px; max-width: 1600px; margin: auto; }
 
         .kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 15px; }
@@ -27,28 +26,29 @@
         .main-content { display: flex; flex-direction: column; gap: 12px; }
         .card-feedback { background: var(--card); padding: 15px; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.4); display: flex; flex-direction: column; min-height: 420px; }
         
+        /* Container do gráfico com scroll para 83 clientes */
         .chart-container { width: 100%; flex-grow: 1; min-height: 350px; overflow-x: auto; overflow-y: hidden; }
-        .chart-wrapper { height: 100%; min-width: 3800px; position: relative; padding-bottom: 20px; } 
+        .chart-wrapper { height: 100%; min-width: 3500px; position: relative; padding-bottom: 20px; } 
 
-        .visitas-content { display: flex; align-items: center; justify-content: center; background: var(--card); padding: 20px; border-radius: 12px; border-right: 4px solid var(--blue); }
-        .visitas-num { font-size: 48px; font-weight: bold; color: var(--blue); margin-right: 15px; }
+        .visitas-content { background: var(--card); padding: 20px; border-radius: 12px; text-align: center; border-left: 4px solid var(--blue); }
+        .visitas-num { font-size: 48px; font-weight: bold; color: var(--blue); display: block; }
 
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(4px); }
         .modal-content { background: var(--card); margin: 5% auto; padding: 20px; width: 85%; max-width: 800px; max-height: 85vh; border-radius: 15px; border: 1px solid var(--blue); position: relative; overflow-y: auto; }
         .close-btn { position: absolute; right: 15px; top: 10px; font-size: 28px; cursor: pointer; color: #64748b; }
-        .cliente-item-detalhe { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid var(--blue); }
+        .cliente-item-detalhe { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid var(--blue); }
 
         @media (min-width: 768px) {
             .kpis { grid-template-columns: repeat(5, 1fr); gap: 12px; }
-            .main-content { display: grid; grid-template-columns: 1fr 300px; }
+            .main-content { display: grid; grid-template-columns: 1fr 280px; }
             .chart-wrapper { min-width: 100%; } 
-            .visitas-content { flex-direction: column; height: 100%; }
-            .visitas-num { font-size: 80px; margin: 0; }
+            .visitas-num { font-size: 70px; }
         }
     </style>
 </head>
 <body>
-    <div class="header"><span class="titulo-header">PERFORMANCE CLIENTE VILA VELHA</span></div>
+    <div class="header"><span style="text-transform: uppercase; letter-spacing: 1px;">Performance Cliente Vila Velha</span></div>
+    
     <div class="container">
         <div class="kpis">
             <div class="kpi" style="cursor: default;"><span id="totalClientes">0</span><strong class="label-bottom">Clientes</strong></div>
@@ -57,16 +57,16 @@
             <div class="kpi insatisfeito" onclick="showCategory('Insatisfeito')"><span id="countInsatisfeito">0</span><strong class="label-bottom">Insatisfeito</strong></div>
             <div class="kpi cancelado" onclick="showCategory('Cancelado')"><span id="countCancelado">0</span><strong class="label-bottom">Cancelados</strong></div>
         </div>
+
         <div class="main-content">
             <div class="card card-feedback">
-                <h3 style="color:var(--blue); font-size:12px; margin-top:0;">GRÁFICO DE SATISFAÇÃO (83 CLIENTES)</h3>
                 <div class="chart-container">
                     <div class="chart-wrapper"><canvas id="clienteChart"></canvas></div>
                 </div>
             </div>
             <div class="visitas-content">
+                <strong style="font-size: 10px; color: #94a3b8; text-transform: uppercase;">Visitas Técnicas</strong>
                 <span id="totalVisitas" class="visitas-num">0</span>
-                <div style="text-align:center; font-weight:bold; color:#94a3b8; font-size:12px;">VISITAS<br>CONCLUÍDAS</div>
             </div>
         </div>
     </div>
@@ -74,7 +74,7 @@
     <div id="feedbackModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal()">&times;</span>
-            <h2 id="modalTitle" style="color: var(--blue); font-size: 18px; margin-bottom:15px; border-bottom:1px solid #333; padding-bottom:10px;"></h2>
+            <h2 id="modalTitle" style="color: var(--blue); font-size: 18px; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px;"></h2>
             <div id="modalBody"></div>
         </div>
     </div>
@@ -84,7 +84,6 @@
         let baseDeDados = [];
         let listasPorCategoria = { Excelente: [], Bom: [], Insatisfeito: [], Cancelado: [] };
 
-        // URL da sua planilha publicada como CSV
         const URL_PLANILHA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTXkZKTd9HAXueZgAFruapogaLr7t5418U7JhDoSG60attaTbbKqIN5oahDXieJHjMgnnl4T_f4i_wV/pub?output=csv"; 
 
         window.onload = () => {
@@ -92,6 +91,7 @@
                 Papa.parse(csv, { 
                     header: true, 
                     skipEmptyLines: true,
+                    quoteChar: '"',
                     complete: (r) => processar(r.data) 
                 });
             });
@@ -109,37 +109,27 @@
             let kpi = { exc: 0, bom: 0, ins: 0, can: 0, visitas: 0 };
 
             dados.forEach(row => {
-                // Mapeamento exato conforme o seu arquivo Git
-                let nomeFantasia = getVal(row, "Fantasia");
-                let nomeCliente = getVal(row, "Nome do cliente");
-                let nomeFinal = nomeFantasia || nomeCliente;
+                let nome = getVal(row, "fantasia") || getVal(row, "nome do cliente") || getVal(row, "cliente");
+                if (!nome || nome === "") return;
 
-                if (!nomeFinal || nomeFinal === "") return;
-
-                let feedback = getVal(row, "Feedback") || "Sem feedback registrado.";
-                let exp = getVal(row, "Experiencia").toLowerCase();
+                let feedback = getVal(row, "feedback") || "Sem feedback.";
+                let exp = getVal(row, "experiencia").toLowerCase();
 
                 let info = {
-                    nome: nomeFinal,
-                    bairro: getVal(row, "Bairro") || "---",
-                    celular: getVal(row, "Celular") || "---",
+                    nome: nome,
+                    bairro: getVal(row, "bairro") || "---",
                     feedback: feedback,
-                    data: getVal(row, "Data") || "---"
+                    data: getVal(row, "data") || "---"
                 };
 
                 let cor = "#3b82f6"; let valor = 7;
 
-                if (exp.includes("cancel")) { 
-                    kpi.can++; cor="#64748b"; valor=2; listasPorCategoria.Cancelado.push(info); 
-                } else if (exp.includes("excelente")) { 
-                    kpi.exc++; cor="#10b981"; valor=10; listasPorCategoria.Excelente.push(info); 
-                } else if (exp.includes("insat") || exp.includes("ruim")) { 
-                    kpi.ins++; cor="#ef4444"; valor=4; listasPorCategoria.Insatisfeito.push(info); 
-                } else { 
-                    kpi.bom++; listasPorCategoria.Bom.push(info); 
-                }
+                if (exp.includes("cancel")) { kpi.can++; cor="#64748b"; valor=2; listasPorCategoria.Cancelado.push(info); }
+                else if (exp.includes("excelente")) { kpi.exc++; cor="#10b981"; valor=10; listasPorCategoria.Excelente.push(info); }
+                else if (exp.includes("insat") || exp.includes("ruim")) { kpi.ins++; cor="#ef4444"; valor=4; listasPorCategoria.Insatisfeito.push(info); }
+                else { kpi.bom++; listasPorCategoria.Bom.push(info); }
 
-                if (feedback.length > 5 && feedback !== "Sem feedback registrado.") kpi.visitas++;
+                if (feedback.length > 5 && !feedback.toLowerCase().includes("sem feedback")) kpi.visitas++;
                 baseDeDados.push({ ...info, cor, valor });
             });
 
@@ -160,17 +150,13 @@
                 type: 'bar',
                 data: {
                     labels: baseDeDados.map(d => d.nome),
-                    datasets: [{
-                        data: baseDeDados.map(d => d.valor),
-                        backgroundColor: baseDeDados.map(d => d.cor),
-                        borderRadius: 2
-                    }]
+                    datasets: [{ data: baseDeDados.map(d => d.valor), backgroundColor: baseDeDados.map(d => d.cor), borderRadius: 2 }]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     scales: {
                         y: { display: false, max: 12 },
-                        x: { ticks: { color: '#94a3b8', font: { size: 7 }, maxRotation: 90, minRotation: 90, autoSkip: false } }
+                        x: { ticks: { color: '#94a3b8', font: { size: 8 }, maxRotation: 90, minRotation: 90, autoSkip: false } }
                     },
                     plugins: { legend: { display: false } },
                     onClick: (e, el) => {
@@ -187,23 +173,16 @@
 
         function showCategory(cat) {
             const lista = listasPorCategoria[cat];
-            document.getElementById("modalTitle").innerText = "Listagem: " + cat;
-            let html = lista.length ? "" : "<p style='text-align:center;'>Nenhum cliente nesta categoria.</p>";
-            
+            document.getElementById("modalTitle").innerText = "Lista: " + cat;
+            let html = "";
             lista.forEach(i => {
-                html += `
-                    <div class="cliente-item-detalhe">
-                        <strong>${i.nome}</strong>
-                        <p>📍 Bairro: ${i.bairro} | 📱 Celular: ${i.celular}</p>
-                    </div>`;
+                html += `<div class="cliente-item-detalhe"><strong>${i.nome}</strong><p>📍 Bairro: ${i.bairro}</p></div>`;
             });
-            
-            document.getElementById("modalBody").innerHTML = html;
+            document.getElementById("modalBody").innerHTML = html || "<p style='text-align:center'>Nenhum cliente.</p>";
             document.getElementById("feedbackModal").style.display = "block";
         }
 
         function closeModal() { document.getElementById("feedbackModal").style.display = "none"; }
-        window.onclick = (e) => { if (e.target.className === 'modal') closeModal(); }
     </script>
 </body>
 </html>
