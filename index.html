@@ -3,59 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DASHBOARD VILA VELHA</title>
+    <title>PERFORMANCE CLIENTE</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 
     <style>
         :root { --bg: #0b1f3a; --card: #142a52; --blue: #3b82f6; --text: #f8fafc; }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
-        .header { background: #08162c; padding: 12px; text-align: center; border-bottom: 3px solid var(--blue); position: sticky; top: 0; z-index: 100; }
+        .header { background: #08162c; padding: 12px; text-align: center; border-bottom: 3px solid var(--blue); }
         .container { padding: 10px; max-width: 1600px; margin: auto; }
 
         .kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 15px; }
-        .kpi { background: var(--card); padding: 12px 5px; border-radius: 10px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border-bottom: 3px solid transparent; cursor: pointer; }
+        .kpi { background: var(--card); padding: 12px 5px; border-radius: 10px; text-align: center; cursor: pointer; border-bottom: 3px solid transparent; transition: 0.3s; }
+        .kpi:hover { background: #1c3a6d; }
         .kpi span { font-size: 26px; font-weight: bold; display: block; }
         .label-bottom { font-size: 10px; font-weight: bold; text-transform: uppercase; color: #94a3b8; margin-top: 4px; display: block; }
 
+        .total { border-color: #fff; }
         .excelente { border-color: #10b981; color: #10b981; }
         .bom { border-color: var(--blue); color: var(--blue); }
         .insatisfeito { border-color: #ef4444; color: #ef4444; }
         .cancelado { border-color: #64748b; color: #94a3b8; }
 
         .main-content { display: flex; flex-direction: column; gap: 12px; }
-        .card-feedback { background: var(--card); padding: 15px; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.4); display: flex; flex-direction: column; min-height: 420px; }
+        .card-feedback { background: var(--card); padding: 15px; border-radius: 12px; min-height: 400px; display: flex; flex-direction: column; }
         
-        /* Container do gráfico com scroll para 83 clientes */
-        .chart-container { width: 100%; flex-grow: 1; min-height: 350px; overflow-x: auto; overflow-y: hidden; }
-        .chart-wrapper { height: 100%; min-width: 3500px; position: relative; padding-bottom: 20px; } 
+        .chart-container { width: 100%; flex-grow: 1; overflow-x: auto; overflow-y: hidden; }
+        .chart-wrapper { height: 100%; min-width: 4000px; position: relative; } 
 
-        .visitas-content { background: var(--card); padding: 20px; border-radius: 12px; text-align: center; border-left: 4px solid var(--blue); }
-        .visitas-num { font-size: 48px; font-weight: bold; color: var(--blue); display: block; }
+        .visitas-content { background: var(--card); padding: 20px; border-radius: 12px; text-align: center; }
+        .visitas-num { font-size: 48px; font-weight: bold; color: var(--blue); }
 
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(4px); }
-        .modal-content { background: var(--card); margin: 5% auto; padding: 20px; width: 85%; max-width: 800px; max-height: 85vh; border-radius: 15px; border: 1px solid var(--blue); position: relative; overflow-y: auto; }
-        .close-btn { position: absolute; right: 15px; top: 10px; font-size: 28px; cursor: pointer; color: #64748b; }
-        .cliente-item-detalhe { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid var(--blue); }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); }
+        .modal-content { background: var(--card); margin: 5% auto; padding: 20px; width: 85%; max-width: 700px; max-height: 80vh; border-radius: 15px; border: 1px solid var(--blue); overflow-y: auto; position: relative; }
+        .close-btn { position: absolute; right: 15px; top: 10px; font-size: 30px; cursor: pointer; color: #fff; }
+        
+        .cliente-item { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--blue); }
+        .cliente-item strong { display: block; font-size: 16px; margin-bottom: 5px; }
+        .cliente-item p { margin: 2px 0; font-size: 13px; color: #cbd5e1; }
 
         @media (min-width: 768px) {
             .kpis { grid-template-columns: repeat(5, 1fr); gap: 12px; }
-            .main-content { display: grid; grid-template-columns: 1fr 280px; }
+            .main-content { display: grid; grid-template-columns: 1fr 250px; }
             .chart-wrapper { min-width: 100%; } 
-            .visitas-num { font-size: 70px; }
         }
     </style>
 </head>
 <body>
-    <div class="header"><span style="text-transform: uppercase; letter-spacing: 1px;">Performance Cliente Vila Velha</span></div>
-    
+
+    <div class="header"><strong>PERFORMANCE CLIENTE VILA VELHA</strong></div>
+
     <div class="container">
         <div class="kpis">
-            <div class="kpi" style="cursor: default;"><span id="totalClientes">0</span><strong class="label-bottom">Clientes</strong></div>
-            <div class="kpi excelente" onclick="showCategory('Excelente')"><span id="countExcelente">0</span><strong class="label-bottom">Excelente</strong></div>
-            <div class="kpi bom" onclick="showCategory('Bom')"><span id="countBom">0</span><strong class="label-bottom">Bom</strong></div>
-            <div class="kpi insatisfeito" onclick="showCategory('Insatisfeito')"><span id="countInsatisfeito">0</span><strong class="label-bottom">Insatisfeito</strong></div>
-            <div class="kpi cancelado" onclick="showCategory('Cancelado')"><span id="countCancelado">0</span><strong class="label-bottom">Cancelados</strong></div>
+            <div class="kpi total" onclick="showCategory('Todos')">
+                <span id="totalClientes">0</span>
+                <strong class="label-bottom">Clientes</strong>
+            </div>
+            <div class="kpi excelente" onclick="showCategory('Excelente')">
+                <span id="countExcelente">0</span>
+                <strong class="label-bottom">Excelente</strong>
+            </div>
+            <div class="kpi bom" onclick="showCategory('Bom')">
+                <span id="countBom">0</span>
+                <strong class="label-bottom">Bom</strong>
+            </div>
+            <div class="kpi insatisfeito" onclick="showCategory('Insatisfeito')">
+                <span id="countInsatisfeito">0</span>
+                <strong class="label-bottom">Insatisfeito</strong>
+            </div>
+            <div class="kpi cancelado" onclick="showCategory('Cancelado')">
+                <span id="countCancelado">0</span>
+                <strong class="label-bottom">Cancelados</strong>
+            </div>
         </div>
 
         <div class="main-content">
@@ -65,16 +84,16 @@
                 </div>
             </div>
             <div class="visitas-content">
-                <strong style="font-size: 10px; color: #94a3b8; text-transform: uppercase;">Visitas Técnicas</strong>
-                <span id="totalVisitas" class="visitas-num">0</span>
+                <strong style="font-size: 10px; color: #94a3b8;">VISITAS CONCLUÍDAS</strong>
+                <div id="totalVisitas" class="visitas-num">0</div>
             </div>
         </div>
     </div>
 
-    <div id="feedbackModal" class="modal">
+    <div id="modal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal()">&times;</span>
-            <h2 id="modalTitle" style="color: var(--blue); font-size: 18px; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px;"></h2>
+            <h2 id="modalTitle" style="color: var(--blue); margin-top: 0;"></h2>
             <div id="modalBody"></div>
         </div>
     </div>
@@ -82,68 +101,74 @@
     <script>
         let chartRef;
         let baseDeDados = [];
-        let listasPorCategoria = { Excelente: [], Bom: [], Insatisfeito: [], Cancelado: [] };
+        let categorias = { Todos: [], Excelente: [], Bom: [], Insatisfeito: [], Cancelado: [] };
 
-        const URL_PLANILHA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTXkZKTd9HAXueZgAFruapogaLr7t5418U7JhDoSG60attaTbbKqIN5oahDXieJHjMgnnl4T_f4i_wV/pub?output=csv"; 
+        const URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTXkZKTd9HAXueZgAFruapogaLr7t5418U7JhDoSG60attaTbbKqIN5oahDXieJHjMgnnl4T_f4i_wV/pub?output=csv";
 
         window.onload = () => {
-            fetch(URL_PLANILHA).then(res => res.text()).then(csv => {
-                Papa.parse(csv, { 
-                    header: true, 
+            fetch(URL).then(res => res.text()).then(csv => {
+                Papa.parse(csv, {
+                    header: true,
                     skipEmptyLines: true,
-                    quoteChar: '"',
-                    complete: (r) => processar(r.data) 
+                    complete: (r) => processar(r.data)
                 });
             });
         };
 
-        function getVal(obj, termo) {
-            const keys = Object.keys(obj);
-            const key = keys.find(k => k.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(termo.toLowerCase()));
+        function getCol(obj, termo) {
+            const key = Object.keys(obj).find(k => k.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(termo));
             return key ? String(obj[key]).trim() : "";
         }
 
         function processar(dados) {
             baseDeDados = [];
-            listasPorCategoria = { Excelente: [], Bom: [], Insatisfeito: [], Cancelado: [] };
-            let kpi = { exc: 0, bom: 0, ins: 0, can: 0, visitas: 0 };
+            categorias = { Todos: [], Excelente: [], Bom: [], Insatisfeito: [], Cancelado: [] };
+            let visitas = 0;
 
             dados.forEach(row => {
-                let nome = getVal(row, "fantasia") || getVal(row, "nome do cliente") || getVal(row, "cliente");
-                if (!nome || nome === "") return;
+                let nome = getCol(row, "fantasia") || getCol(row, "nome do cliente") || getCol(row, "cliente");
+                if (!nome) return;
 
-                let feedback = getVal(row, "feedback") || "Sem feedback.";
-                let exp = getVal(row, "experiencia").toLowerCase();
-
+                let exp = getCol(row, "experiencia").toLowerCase();
+                let feedback = getCol(row, "feedback") || "Sem feedback.";
+                
                 let info = {
                     nome: nome,
-                    bairro: getVal(row, "bairro") || "---",
+                    bairro: getCol(row, "bairro") || "---",
                     feedback: feedback,
-                    data: getVal(row, "data") || "---"
+                    data: getCol(row, "data") || "---"
                 };
 
-                let cor = "#3b82f6"; let valor = 7;
+                let cor = "#3b82f6"; 
+                let valor = 7;
 
-                if (exp.includes("cancel")) { kpi.can++; cor="#64748b"; valor=2; listasPorCategoria.Cancelado.push(info); }
-                else if (exp.includes("excelente")) { kpi.exc++; cor="#10b981"; valor=10; listasPorCategoria.Excelente.push(info); }
-                else if (exp.includes("insat") || exp.includes("ruim")) { kpi.ins++; cor="#ef4444"; valor=4; listasPorCategoria.Insatisfeito.push(info); }
-                else { kpi.bom++; listasPorCategoria.Bom.push(info); }
+                if (exp.includes("cancel")) { 
+                    cor = "#64748b"; valor = 2; categorias.Cancelado.push(info); 
+                } else if (exp.includes("excelente")) { 
+                    cor = "#10b981"; valor = 10; categorias.Excelente.push(info); 
+                } else if (exp.includes("insat") || exp.includes("ruim")) { 
+                    cor = "#ef4444"; valor = 4; categorias.Insatisfeito.push(info); 
+                } else { 
+                    categorias.Bom.push(info); 
+                }
 
-                if (feedback.length > 5 && !feedback.toLowerCase().includes("sem feedback")) kpi.visitas++;
-                baseDeDados.push({ ...info, cor, valor });
+                if (feedback.length > 5 && !feedback.toLowerCase().includes("sem feedback")) visitas++;
+                
+                categorias.Todos.push(info);
+                baseDeDados.push({ nome, cor, valor, feedback, data: info.data });
             });
 
-            document.getElementById("totalClientes").innerText = baseDeDados.length;
-            document.getElementById("countExcelente").innerText = kpi.exc;
-            document.getElementById("countBom").innerText = kpi.bom;
-            document.getElementById("countInsatisfeito").innerText = kpi.ins;
-            document.getElementById("countCancelado").innerText = kpi.can;
-            document.getElementById("totalVisitas").innerText = kpi.visitas;
+            document.getElementById("totalClientes").innerText = categorias.Todos.length;
+            document.getElementById("countExcelente").innerText = categorias.Excelente.length;
+            document.getElementById("countBom").innerText = categorias.Bom.length;
+            document.getElementById("countInsatisfeito").innerText = categorias.Insatisfeito.length;
+            document.getElementById("countCancelado").innerText = categorias.Cancelado.length;
+            document.getElementById("totalVisitas").innerText = visitas;
 
-            renderizarGrafico();
+            renderizar();
         }
 
-        function renderizarGrafico() {
+        function renderizar() {
             const ctx = document.getElementById("clienteChart").getContext("2d");
             if (chartRef) chartRef.destroy();
             chartRef = new Chart(ctx, {
@@ -154,17 +179,12 @@
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    scales: {
-                        y: { display: false, max: 12 },
-                        x: { ticks: { color: '#94a3b8', font: { size: 8 }, maxRotation: 90, minRotation: 90, autoSkip: false } }
-                    },
+                    scales: { y: { display: false, max: 12 }, x: { ticks: { color: '#94a3b8', font: { size: 8 }, maxRotation: 90, autoSkip: false } } },
                     plugins: { legend: { display: false } },
                     onClick: (e, el) => {
                         if (el.length > 0) {
                             const d = baseDeDados[el[0].index];
-                            document.getElementById("modalTitle").innerText = d.nome;
-                            document.getElementById("modalBody").innerHTML = `<p style="color:var(--blue)"><b>Data:</b> ${d.data}</p><p>${d.feedback}</p>`;
-                            document.getElementById("feedbackModal").style.display = "block";
+                            openModal(d.nome, `<p><b>Data:</b> ${d.data}</p><p>${d.feedback}</p>`);
                         }
                     }
                 }
@@ -172,17 +192,21 @@
         }
 
         function showCategory(cat) {
-            const lista = listasPorCategoria[cat];
-            document.getElementById("modalTitle").innerText = "Lista: " + cat;
+            const lista = categorias[cat];
             let html = "";
             lista.forEach(i => {
-                html += `<div class="cliente-item-detalhe"><strong>${i.nome}</strong><p>📍 Bairro: ${i.bairro}</p></div>`;
+                html += `<div class="cliente-item"><strong>${i.nome}</strong><p>📍 Bairro: ${i.bairro}</p></div>`;
             });
-            document.getElementById("modalBody").innerHTML = html || "<p style='text-align:center'>Nenhum cliente.</p>";
-            document.getElementById("feedbackModal").style.display = "block";
+            openModal("Lista: " + cat, html || "<p>Nenhum cliente encontrado.</p>");
         }
 
-        function closeModal() { document.getElementById("feedbackModal").style.display = "none"; }
+        function openModal(titulo, conteudo) {
+            document.getElementById("modalTitle").innerText = titulo;
+            document.getElementById("modalBody").innerHTML = conteudo;
+            document.getElementById("modal").style.display = "block";
+        }
+
+        function closeModal() { document.getElementById("modal").style.display = "none"; }
     </script>
 </body>
 </html>
