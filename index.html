@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PERFORMANCE VILA VELHA</title>
+    <title>PERFORMANCE - 83 CLIENTES</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 
@@ -15,7 +15,6 @@
 
         .kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 15px; }
         .kpi { background: var(--card); padding: 12px 5px; border-radius: 10px; text-align: center; cursor: pointer; border-bottom: 3px solid transparent; transition: 0.2s; }
-        .kpi:active { transform: scale(0.98); }
         .kpi span { font-size: 26px; font-weight: bold; display: block; }
         .label-bottom { font-size: 10px; font-weight: bold; text-transform: uppercase; color: #94a3b8; margin-top: 4px; display: block; }
 
@@ -29,8 +28,8 @@
         .card-chart { background: var(--card); padding: 15px; border-radius: 12px; min-height: 400px; }
         
         .chart-container { width: 100%; height: 350px; overflow-x: auto; }
-        /* Largura forçada para garantir que os 83 nomes apareçam sem amontoar */
-        .chart-wrapper { height: 100%; min-width: 4500px; position: relative; } 
+        /* Largura aumentada para acomodar 83 clientes sem erro */
+        .chart-wrapper { height: 100%; min-width: 4200px; position: relative; } 
 
         .visitas-card { background: var(--card); padding: 20px; border-radius: 12px; text-align: center; border-left: 4px solid var(--blue); }
         .visitas-num { font-size: 50px; font-weight: bold; color: var(--blue); }
@@ -40,24 +39,17 @@
         .close-btn { position: absolute; right: 15px; top: 10px; font-size: 30px; cursor: pointer; }
         
         .cliente-item { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--blue); }
-        .cliente-item strong { display: block; font-size: 15px; color: var(--blue); }
-
-        @media (min-width: 768px) {
-            .kpis { grid-template-columns: repeat(5, 1fr); gap: 12px; }
-            .main-content { display: grid; grid-template-columns: 1fr 250px; }
-            .chart-wrapper { min-width: 100%; } 
-        }
     </style>
 </head>
 <body>
 
-    <div class="header">DASHBOARD PERFORMANCE - 83 CLIENTES</div>
+    <div class="header">DASHBOARD PERFORMANCE - TOTAL 83 CLIENTES</div>
 
     <div class="container">
         <div class="kpis">
             <div class="kpi total" onclick="showCategory('Todos')">
                 <span id="totalClientes">0</span>
-                <strong class="label-bottom">Clientes</strong>
+                <strong class="label-bottom">Total Clientes</strong>
             </div>
             <div class="kpi excelente" onclick="showCategory('Excelente')">
                 <span id="countExcelente">0</span>
@@ -84,7 +76,7 @@
                 </div>
             </div>
             <div class="visitas-card">
-                <strong style="font-size: 10px; color: #94a3b8;">VISITAS TÉCNICAS</strong>
+                <strong style="font-size: 10px; color: #94a3b8;">CLIENTES COM FEEDBACK</strong>
                 <div id="totalVisitas" class="visitas-num">0</div>
             </div>
         </div>
@@ -109,41 +101,46 @@
             fetch(URL).then(res => res.text()).then(csv => {
                 Papa.parse(csv, {
                     header: true,
-                    skipEmptyLines: 'greedy', // Garante que não pare em linhas em branco
+                    skipEmptyLines: 'greedy', 
+                    quoteChar: '"', 
                     complete: (r) => processar(r.data)
                 });
             });
         };
 
-        // Função para achar colunas mesmo com nomes variados
         function getCol(obj, termo) {
-            const key = Object.keys(obj).find(k => k.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(termo));
+            const key = Object.keys(obj).find(k => k.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(termo.toLowerCase()));
             return key ? String(obj[key]).trim() : "";
         }
 
         function processar(dados) {
             baseDeDados = [];
             categorias = { Todos: [], Excelente: [], Bom: [], Insatisfeito: [], Cancelado: [] };
-            let visitasCount = 0;
+            let comFeedback = 0;
 
             dados.forEach(row => {
-                // PRIORIDADE: Coluna FANTASIA
+                // Tenta Fantasia primeiro, depois Nome do Cliente
                 let nome = getCol(row, "fantasia") || getCol(row, "nome do cliente") || getCol(row, "cliente");
                 
-                // Se não houver nome nenhum na linha, pula. Se houver, processa.
-                if (!nome || nome.toLowerCase() === "total") return;
+                // Se a linha tiver qualquer dado mas o nome for nulo, pegamos o primeiro valor da linha como nome
+                if (!nome) {
+                    const vals = Object.values(row).filter(v => v);
+                    if (vals.length > 0) nome = vals[0];
+                }
 
-                let exp = getCol(row, "experiencia").toLowerCase() || getCol(row, "status").toLowerCase();
-                let feedback = getCol(row, "feedback") || "Sem relato.";
+                if (!nome || nome.toLowerCase().includes("total")) return;
+
+                let exp = getCol(row, "experiencia").toLowerCase();
+                let feedback = getCol(row, "feedback");
                 
                 let info = {
                     nome: nome,
                     bairro: getCol(row, "bairro") || "---",
-                    feedback: feedback,
+                    feedback: feedback || "Nenhum feedback preenchido.",
                     data: getCol(row, "data") || "---"
                 };
 
-                let cor = "#3b82f6"; // Azul (BOM)
+                let cor = "#3b82f6"; 
                 let valor = 7;
 
                 if (exp.includes("cancel")) { 
@@ -156,10 +153,10 @@
                     categorias.Bom.push(info); 
                 }
 
-                if (feedback.length > 5 && !feedback.toLowerCase().includes("sem feedback")) visitasCount++;
+                if (feedback && feedback.length > 3) comFeedback++;
                 
                 categorias.Todos.push(info);
-                baseDeDados.push({ nome, cor, valor, feedback, data: info.data });
+                baseDeDados.push({ nome, cor, valor, feedback: info.feedback, data: info.data });
             });
 
             document.getElementById("totalClientes").innerText = categorias.Todos.length;
@@ -167,7 +164,7 @@
             document.getElementById("countBom").innerText = categorias.Bom.length;
             document.getElementById("countInsatisfeito").innerText = categorias.Insatisfeito.length;
             document.getElementById("countCancelado").innerText = categorias.Cancelado.length;
-            document.getElementById("totalVisitas").innerText = visitasCount;
+            document.getElementById("totalVisitas").innerText = comFeedback;
 
             renderizar();
         }
@@ -214,7 +211,6 @@
         }
 
         function closeModal() { document.getElementById("modal").style.display = "none"; }
-        window.onclick = (e) => { if (e.target.className === 'modal') closeModal(); }
     </script>
 </body>
 </html>
