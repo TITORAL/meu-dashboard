@@ -64,7 +64,7 @@
         <div class="main-content">
             <div class="card card-feedback">
                 <div class="chart-container">
-                    <div class="chart-wrapper"><canvas id="clienteChart"></canvas></div>
+                    <div class="chart-wrapper" id="graficoScroll"><canvas id="clienteChart"></canvas></div>
                 </div>
             </div>
             <div class="visitas-card">
@@ -87,6 +87,7 @@
         let baseDeDados = [];
         let listasPorCategoria = { Todos: [], Excelente: [], Bom: [], Insatisfeito: [], Cancelado: [] };
 
+        // URL da sua planilha publicada como CSV
         const URL_PLANILHA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTXkZKTd9HAXueZgAFruapogaLr7t5418U7JhDoSG60attaTbbKqIN5oahDXieJHjMgnnl4T_f4i_wV/pub?output=csv"; 
 
         window.onload = () => {
@@ -94,16 +95,11 @@
                 Papa.parse(csv, { 
                     header: true, 
                     skipEmptyLines: true,
+                    transformHeader: (h) => h.trim().normalize("NFD").replace(/[\u0300-\u036f]/g, ""), // Limpa espaços e acentos dos títulos
                     complete: (r) => processar(r.data) 
                 });
             });
         };
-
-        function getVal(obj, termo) {
-            const keys = Object.keys(obj);
-            const key = keys.find(k => k.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().includes(termo.toLowerCase()));
-            return key ? String(obj[key]).trim() : "";
-        }
 
         function processar(dados) {
             baseDeDados = [];
@@ -111,35 +107,38 @@
             let visitasCount = 0;
 
             dados.forEach(row => {
-                let fantasia = getVal(row, "fantasia");
-                if (!fantasia || fantasia.toLowerCase() === "total") return;
+                let fantasia = row["Fantasia"];
+                if (!fantasia || fantasia.toLowerCase().includes("total")) return;
+
+                let exp = (row["Experiencia"] || "").toLowerCase();
+                let feedback = row["Feedback"] || "Sem feedback registrado.";
 
                 let info = {
                     fantasia: fantasia,
-                    nomeCliente: getVal(row, "nome do cliente"),
-                    endereco: getVal(row, "endereco"),
-                    numero: getVal(row, "numero"),
-                    bairro: getVal(row, "bairro"),
-                    celular: getVal(row, "celular"),
-                    cpf: getVal(row, "cpf"),
-                    feedback: getVal(row, "feedback") || "Sem feedback registrado.",
-                    experiencia: getVal(row, "experiencia").toLowerCase(),
-                    data: getVal(row, "data") || "---"
+                    nomeCliente: row["Nome do cliente"] || "---",
+                    endereco: row["Endereco"] || "---",
+                    numero: row["Numero"] || "---",
+                    bairro: row["Bairro"] || "---",
+                    celular: row["Celular"] || "---",
+                    cpf: row["CPF"] || "---",
+                    feedback: feedback,
+                    experiencia: exp,
+                    data: row["Data"] || "---"
                 };
 
                 let cor = "#3b82f6"; let valor = 7;
 
-                if (info.experiencia.includes("excelente")) { 
+                if (exp.includes("excelente")) { 
                     cor = "#10b981"; valor = 10; listasPorCategoria.Excelente.push(info); 
-                } else if (info.experiencia.includes("insat") || info.experiencia.includes("ruim")) { 
+                } else if (exp.includes("insat") || exp.includes("ruim")) { 
                     cor = "#ef4444"; valor = 4; listasPorCategoria.Insatisfeito.push(info); 
-                } else if (info.experiencia.includes("cancel")) { 
+                } else if (exp.includes("cancel")) { 
                     cor = "#64748b"; valor = 2; listasPorCategoria.Cancelado.push(info); 
                 } else { 
                     listasPorCategoria.Bom.push(info); 
                 }
 
-                if (info.feedback.length > 5 && !info.feedback.toLowerCase().includes("sem feedback")) visitasCount++;
+                if (feedback.length > 5 && !feedback.toLowerCase().includes("sem feedback")) visitasCount++;
                 
                 listasPorCategoria.Todos.push(info);
                 baseDeDados.push({ ...info, cor, valor });
@@ -151,6 +150,11 @@
             document.getElementById("countInsatisfeito").innerText = listasPorCategoria.Insatisfeito.length;
             document.getElementById("countCancelado").innerText = listasPorCategoria.Cancelado.length;
             document.getElementById("totalVisitas").innerText = visitasCount;
+
+            // Se for mobile, garante o scroll largo para 83 clientes
+            if(window.innerWidth < 768) {
+                document.getElementById("graficoScroll").style.minWidth = "4500px";
+            }
 
             renderizarGrafico();
         }
@@ -174,20 +178,25 @@
                     onClick: (e, el) => {
                         if (el.length > 0) {
                             const d = baseDeDados[el[0].index];
-                            openModal(d.fantasia, `
-                                <div class="info-grid">
-                                    <p><b>Cliente:</b> ${d.nomeCliente}</p>
-                                    <p><b>Endereço:</b> ${d.endereco}, ${d.numero} - ${d.bairro}</p>
-                                    <p><b>Celular:</b> ${d.celular} | <b>CPF/CNPJ:</b> ${d.cpf}</p>
-                                    <hr style="border:0; border-top:1px solid #333; margin:15px 0;">
-                                    <p><b>Data da Visita:</b> ${d.data}</p>
-                                    <p><b>Feedback:</b> ${d.feedback}</p>
-                                </div>
-                            `);
+                            showDetails(d);
                         }
                     }
                 }
             });
+        }
+
+        function showDetails(d) {
+            openModal(d.fantasia, `
+                <div class="info-grid">
+                    <p><b>Nome do Cliente:</b> ${d.nomeCliente}</p>
+                    <p><b>Endereço:</b> ${d.endereco}, ${d.numero}</p>
+                    <p><b>Bairro:</b> ${d.bairro}</p>
+                    <p><b>Celular:</b> ${d.celular} | <b>CPF:</b> ${d.cpf}</p>
+                    <hr style="border:0; border-top:1px solid #333; margin:15px 0;">
+                    <p><b>Data:</b> ${d.data}</p>
+                    <p><b>Feedback:</b> ${d.feedback}</p>
+                </div>
+            `);
         }
 
         function showCategory(cat) {
@@ -204,7 +213,7 @@
                         </div>
                     </div>`;
             });
-            openModal("Lista: " + cat, html || "<p style='text-align:center'>Nenhum registro.</p>");
+            openModal("Lista: " + cat, html || "<p style='text-align:center'>Nenhum registro encontrado.</p>");
         }
 
         function openModal(titulo, conteudo) {
