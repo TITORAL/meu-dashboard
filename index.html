@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PERFORMANCE CLIENTE</title>
+    <title>PERFORMANCE VILA VELHA</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 
     <style>
         :root { --bg: #0b1f3a; --card: #142a52; --blue: #3b82f6; --text: #f8fafc; }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
-        .header { background: #08162c; padding: 12px; text-align: center; border-bottom: 3px solid var(--blue); }
+        .header { background: #08162c; padding: 12px; text-align: center; border-bottom: 3px solid var(--blue); font-weight: bold; }
         .container { padding: 10px; max-width: 1600px; margin: auto; }
 
         .kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 15px; }
-        .kpi { background: var(--card); padding: 12px 5px; border-radius: 10px; text-align: center; cursor: pointer; border-bottom: 3px solid transparent; transition: 0.3s; }
-        .kpi:hover { background: #1c3a6d; }
+        .kpi { background: var(--card); padding: 12px 5px; border-radius: 10px; text-align: center; cursor: pointer; border-bottom: 3px solid transparent; transition: 0.2s; }
+        .kpi:active { transform: scale(0.98); }
         .kpi span { font-size: 26px; font-weight: bold; display: block; }
         .label-bottom { font-size: 10px; font-weight: bold; text-transform: uppercase; color: #94a3b8; margin-top: 4px; display: block; }
 
@@ -26,21 +26,21 @@
         .cancelado { border-color: #64748b; color: #94a3b8; }
 
         .main-content { display: flex; flex-direction: column; gap: 12px; }
-        .card-feedback { background: var(--card); padding: 15px; border-radius: 12px; min-height: 400px; display: flex; flex-direction: column; }
+        .card-chart { background: var(--card); padding: 15px; border-radius: 12px; min-height: 400px; }
         
-        .chart-container { width: 100%; flex-grow: 1; overflow-x: auto; overflow-y: hidden; }
-        .chart-wrapper { height: 100%; min-width: 4000px; position: relative; } 
+        .chart-container { width: 100%; height: 350px; overflow-x: auto; }
+        /* Largura forçada para garantir que os 83 nomes apareçam sem amontoar */
+        .chart-wrapper { height: 100%; min-width: 4500px; position: relative; } 
 
-        .visitas-content { background: var(--card); padding: 20px; border-radius: 12px; text-align: center; }
-        .visitas-num { font-size: 48px; font-weight: bold; color: var(--blue); }
+        .visitas-card { background: var(--card); padding: 20px; border-radius: 12px; text-align: center; border-left: 4px solid var(--blue); }
+        .visitas-num { font-size: 50px; font-weight: bold; color: var(--blue); }
 
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); }
-        .modal-content { background: var(--card); margin: 5% auto; padding: 20px; width: 85%; max-width: 700px; max-height: 80vh; border-radius: 15px; border: 1px solid var(--blue); overflow-y: auto; position: relative; }
-        .close-btn { position: absolute; right: 15px; top: 10px; font-size: 30px; cursor: pointer; color: #fff; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); }
+        .modal-content { background: var(--card); margin: 5% auto; padding: 20px; width: 85%; max-width: 600px; max-height: 80vh; border-radius: 15px; border: 1px solid var(--blue); overflow-y: auto; position: relative; }
+        .close-btn { position: absolute; right: 15px; top: 10px; font-size: 30px; cursor: pointer; }
         
         .cliente-item { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--blue); }
-        .cliente-item strong { display: block; font-size: 16px; margin-bottom: 5px; }
-        .cliente-item p { margin: 2px 0; font-size: 13px; color: #cbd5e1; }
+        .cliente-item strong { display: block; font-size: 15px; color: var(--blue); }
 
         @media (min-width: 768px) {
             .kpis { grid-template-columns: repeat(5, 1fr); gap: 12px; }
@@ -51,7 +51,7 @@
 </head>
 <body>
 
-    <div class="header"><strong>PERFORMANCE CLIENTE VILA VELHA</strong></div>
+    <div class="header">DASHBOARD PERFORMANCE - 83 CLIENTES</div>
 
     <div class="container">
         <div class="kpis">
@@ -78,13 +78,13 @@
         </div>
 
         <div class="main-content">
-            <div class="card card-feedback">
+            <div class="card-chart">
                 <div class="chart-container">
                     <div class="chart-wrapper"><canvas id="clienteChart"></canvas></div>
                 </div>
             </div>
-            <div class="visitas-content">
-                <strong style="font-size: 10px; color: #94a3b8;">VISITAS CONCLUÍDAS</strong>
+            <div class="visitas-card">
+                <strong style="font-size: 10px; color: #94a3b8;">VISITAS TÉCNICAS</strong>
                 <div id="totalVisitas" class="visitas-num">0</div>
             </div>
         </div>
@@ -93,7 +93,7 @@
     <div id="modal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal()">&times;</span>
-            <h2 id="modalTitle" style="color: var(--blue); margin-top: 0;"></h2>
+            <h2 id="modalTitle" style="color: var(--blue); margin-top: 0; font-size: 18px;"></h2>
             <div id="modalBody"></div>
         </div>
     </div>
@@ -109,12 +109,13 @@
             fetch(URL).then(res => res.text()).then(csv => {
                 Papa.parse(csv, {
                     header: true,
-                    skipEmptyLines: true,
+                    skipEmptyLines: 'greedy', // Garante que não pare em linhas em branco
                     complete: (r) => processar(r.data)
                 });
             });
         };
 
+        // Função para achar colunas mesmo com nomes variados
         function getCol(obj, termo) {
             const key = Object.keys(obj).find(k => k.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(termo));
             return key ? String(obj[key]).trim() : "";
@@ -123,14 +124,17 @@
         function processar(dados) {
             baseDeDados = [];
             categorias = { Todos: [], Excelente: [], Bom: [], Insatisfeito: [], Cancelado: [] };
-            let visitas = 0;
+            let visitasCount = 0;
 
             dados.forEach(row => {
+                // PRIORIDADE: Coluna FANTASIA
                 let nome = getCol(row, "fantasia") || getCol(row, "nome do cliente") || getCol(row, "cliente");
-                if (!nome) return;
+                
+                // Se não houver nome nenhum na linha, pula. Se houver, processa.
+                if (!nome || nome.toLowerCase() === "total") return;
 
-                let exp = getCol(row, "experiencia").toLowerCase();
-                let feedback = getCol(row, "feedback") || "Sem feedback.";
+                let exp = getCol(row, "experiencia").toLowerCase() || getCol(row, "status").toLowerCase();
+                let feedback = getCol(row, "feedback") || "Sem relato.";
                 
                 let info = {
                     nome: nome,
@@ -139,7 +143,7 @@
                     data: getCol(row, "data") || "---"
                 };
 
-                let cor = "#3b82f6"; 
+                let cor = "#3b82f6"; // Azul (BOM)
                 let valor = 7;
 
                 if (exp.includes("cancel")) { 
@@ -152,7 +156,7 @@
                     categorias.Bom.push(info); 
                 }
 
-                if (feedback.length > 5 && !feedback.toLowerCase().includes("sem feedback")) visitas++;
+                if (feedback.length > 5 && !feedback.toLowerCase().includes("sem feedback")) visitasCount++;
                 
                 categorias.Todos.push(info);
                 baseDeDados.push({ nome, cor, valor, feedback, data: info.data });
@@ -163,7 +167,7 @@
             document.getElementById("countBom").innerText = categorias.Bom.length;
             document.getElementById("countInsatisfeito").innerText = categorias.Insatisfeito.length;
             document.getElementById("countCancelado").innerText = categorias.Cancelado.length;
-            document.getElementById("totalVisitas").innerText = visitas;
+            document.getElementById("totalVisitas").innerText = visitasCount;
 
             renderizar();
         }
@@ -179,7 +183,10 @@
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    scales: { y: { display: false, max: 12 }, x: { ticks: { color: '#94a3b8', font: { size: 8 }, maxRotation: 90, autoSkip: false } } },
+                    scales: { 
+                        y: { display: false, max: 12 }, 
+                        x: { ticks: { color: '#94a3b8', font: { size: 8 }, maxRotation: 90, autoSkip: false } } 
+                    },
                     plugins: { legend: { display: false } },
                     onClick: (e, el) => {
                         if (el.length > 0) {
@@ -197,7 +204,7 @@
             lista.forEach(i => {
                 html += `<div class="cliente-item"><strong>${i.nome}</strong><p>📍 Bairro: ${i.bairro}</p></div>`;
             });
-            openModal("Lista: " + cat, html || "<p>Nenhum cliente encontrado.</p>");
+            openModal("Lista: " + cat, html || "<p style='text-align:center'>Nenhum registro.</p>");
         }
 
         function openModal(titulo, conteudo) {
@@ -207,6 +214,7 @@
         }
 
         function closeModal() { document.getElementById("modal").style.display = "none"; }
+        window.onclick = (e) => { if (e.target.className === 'modal') closeModal(); }
     </script>
 </body>
 </html>
