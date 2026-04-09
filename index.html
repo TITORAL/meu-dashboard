@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PERFORMANCE - 83 CLIENTES</title>
+    <title>PERFORMANCE CLIENTE - 83 REGISTROS</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 
     <style>
         :root { --bg: #0b1f3a; --card: #142a52; --blue: #3b82f6; --text: #f8fafc; }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
-        .header { background: #08162c; padding: 12px; text-align: center; border-bottom: 3px solid var(--blue); font-weight: bold; }
+        .header { background: #08162c; padding: 15px; text-align: center; border-bottom: 3px solid var(--blue); font-weight: bold; letter-spacing: 1px; }
         .container { padding: 10px; max-width: 1600px; margin: auto; }
 
-        .kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 15px; }
-        .kpi { background: var(--card); padding: 12px 5px; border-radius: 10px; text-align: center; cursor: pointer; border-bottom: 3px solid transparent; transition: 0.2s; }
-        .kpi span { font-size: 26px; font-weight: bold; display: block; }
-        .label-bottom { font-size: 10px; font-weight: bold; text-transform: uppercase; color: #94a3b8; margin-top: 4px; display: block; }
+        .kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+        .kpi { background: var(--card); padding: 15px 5px; border-radius: 12px; text-align: center; cursor: pointer; border-bottom: 4px solid transparent; transition: 0.2s; }
+        .kpi span { font-size: 30px; font-weight: bold; display: block; }
+        .kpi strong { font-size: 11px; color: #94a3b8; text-transform: uppercase; }
 
         .total { border-color: #fff; }
         .excelente { border-color: #10b981; color: #10b981; }
@@ -24,193 +24,166 @@
         .insatisfeito { border-color: #ef4444; color: #ef4444; }
         .cancelado { border-color: #64748b; color: #94a3b8; }
 
-        .main-content { display: flex; flex-direction: column; gap: 12px; }
-        .card-chart { background: var(--card); padding: 15px; border-radius: 12px; min-height: 400px; }
+        .main-content { display: flex; flex-direction: column; gap: 15px; }
+        .card-chart { background: var(--card); padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         
-        .chart-container { width: 100%; height: 350px; overflow-x: auto; }
-        /* Largura aumentada para acomodar 83 clientes sem erro */
-        .chart-wrapper { height: 100%; min-width: 4200px; position: relative; } 
+        /* Container com scroll para os 83 clientes */
+        .chart-container { width: 100%; height: 400px; overflow-x: auto; overflow-y: hidden; cursor: grab; }
+        .chart-wrapper { height: 100%; position: relative; } 
 
-        .visitas-card { background: var(--card); padding: 20px; border-radius: 12px; text-align: center; border-left: 4px solid var(--blue); }
-        .visitas-num { font-size: 50px; font-weight: bold; color: var(--blue); }
-
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); }
-        .modal-content { background: var(--card); margin: 5% auto; padding: 20px; width: 85%; max-width: 600px; max-height: 80vh; border-radius: 15px; border: 1px solid var(--blue); overflow-y: auto; position: relative; }
-        .close-btn { position: absolute; right: 15px; top: 10px; font-size: 30px; cursor: pointer; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(5px); }
+        .modal-content { background: var(--card); margin: 5% auto; padding: 25px; width: 85%; max-width: 700px; max-height: 80vh; border-radius: 15px; border: 1px solid var(--blue); overflow-y: auto; position: relative; }
+        .close-btn { position: absolute; right: 20px; top: 15px; font-size: 30px; cursor: pointer; color: #fff; }
         
-        .cliente-item { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--blue); }
+        .item-lista { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin-bottom: 12px; border-left: 5px solid var(--blue); }
+
+        @media (min-width: 768px) {
+            .kpis { grid-template-columns: repeat(5, 1fr); }
+        }
     </style>
 </head>
 <body>
 
-    <div class="header">DASHBOARD PERFORMANCE - TOTAL 83 CLIENTES</div>
+    <div class="header">PERFORMANCE VILA VELHA - <span id="labelTotal">83</span> CLIENTES</div>
 
     <div class="container">
         <div class="kpis">
-            <div class="kpi total" onclick="showCategory('Todos')">
-                <span id="totalClientes">0</span>
-                <strong class="label-bottom">Total Clientes</strong>
-            </div>
-            <div class="kpi excelente" onclick="showCategory('Excelente')">
-                <span id="countExcelente">0</span>
-                <strong class="label-bottom">Excelente</strong>
-            </div>
-            <div class="kpi bom" onclick="showCategory('Bom')">
-                <span id="countBom">0</span>
-                <strong class="label-bottom">Bom</strong>
-            </div>
-            <div class="kpi insatisfeito" onclick="showCategory('Insatisfeito')">
-                <span id="countInsatisfeito">0</span>
-                <strong class="label-bottom">Insatisfeito</strong>
-            </div>
-            <div class="kpi cancelado" onclick="showCategory('Cancelado')">
-                <span id="countCancelado">0</span>
-                <strong class="label-bottom">Cancelados</strong>
-            </div>
+            <div class="kpi total" onclick="abrirCategoria('Todos')"><span id="t_total">0</span><strong>Clientes</strong></div>
+            <div class="kpi excelente" onclick="abrirCategoria('Excelente')"><span id="t_exc">0</span><strong>Excelente</strong></div>
+            <div class="kpi bom" onclick="abrirCategoria('Bom')"><span id="t_bom">0</span><strong>Bom</strong></div>
+            <div class="kpi insatisfeito" onclick="abrirCategoria('Insatisfeito')"><span id="t_ins">0</span><strong>Insatisfeito</strong></div>
+            <div class="kpi cancelado" onclick="abrirCategoria('Cancelado')"><span id="t_can">0</span><strong>Cancelados</strong></div>
         </div>
 
         <div class="main-content">
             <div class="card-chart">
-                <div class="chart-container">
-                    <div class="chart-wrapper"><canvas id="clienteChart"></canvas></div>
+                <div class="chart-container" id="scrollContainer">
+                    <div class="chart-wrapper" id="canvasWrapper">
+                        <canvas id="meuGrafico"></canvas>
+                    </div>
                 </div>
-            </div>
-            <div class="visitas-card">
-                <strong style="font-size: 10px; color: #94a3b8;">CLIENTES COM FEEDBACK</strong>
-                <div id="totalVisitas" class="visitas-num">0</div>
             </div>
         </div>
     </div>
 
     <div id="modal" class="modal">
         <div class="modal-content">
-            <span class="close-btn" onclick="closeModal()">&times;</span>
-            <h2 id="modalTitle" style="color: var(--blue); margin-top: 0; font-size: 18px;"></h2>
-            <div id="modalBody"></div>
+            <span class="close-btn" onclick="fecharModal()">&times;</span>
+            <h2 id="modalTitulo" style="color: var(--blue); margin-top: 0;"></h2>
+            <div id="modalCorpo"></div>
         </div>
     </div>
 
     <script>
-        let chartRef;
-        let baseDeDados = [];
-        let categorias = { Todos: [], Excelente: [], Bom: [], Insatisfeito: [], Cancelado: [] };
+        let chartInstance;
+        let dadosClientes = [];
+        let grupos = { Todos: [], Excelente: [], Bom: [], Insatisfeito: [], Cancelado: [] };
 
-        const URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTXkZKTd9HAXueZgAFruapogaLr7t5418U7JhDoSG60attaTbbKqIN5oahDXieJHjMgnnl4T_f4i_wV/pub?output=csv";
+        const URL_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTXkZKTd9HAXueZgAFruapogaLr7t5418U7JhDoSG60attaTbbKqIN5oahDXieJHjMgnnl4T_f4i_wV/pub?output=csv";
 
         window.onload = () => {
-            fetch(URL).then(res => res.text()).then(csv => {
+            fetch(URL_CSV).then(res => res.text()).then(csv => {
                 Papa.parse(csv, {
                     header: true,
-                    skipEmptyLines: 'greedy', 
-                    quoteChar: '"', 
-                    complete: (r) => processar(r.data)
+                    skipEmptyLines: true,
+                    complete: (res) => processarDados(res.data)
                 });
             });
         };
 
-        function getCol(obj, termo) {
-            const key = Object.keys(obj).find(k => k.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(termo.toLowerCase()));
-            return key ? String(obj[key]).trim() : "";
-        }
+        function processarDados(dados) {
+            dadosClientes = [];
+            grupos = { Todos: [], Excelente: [], Bom: [], Insatisfeito: [], Cancelado: [] };
 
-        function processar(dados) {
-            baseDeDados = [];
-            categorias = { Todos: [], Excelente: [], Bom: [], Insatisfeito: [], Cancelado: [] };
-            let comFeedback = 0;
-
-            dados.forEach(row => {
-                // Tenta Fantasia primeiro, depois Nome do Cliente
-                let nome = getCol(row, "fantasia") || getCol(row, "nome do cliente") || getCol(row, "cliente");
-                
-                // Se a linha tiver qualquer dado mas o nome for nulo, pegamos o primeiro valor da linha como nome
-                if (!nome) {
-                    const vals = Object.values(row).filter(v => v);
-                    if (vals.length > 0) nome = vals[0];
-                }
-
+            dados.forEach(linha => {
+                // Mapeamento direto das colunas da sua planilha Git
+                let nome = linha["Fantasia"] || linha["Nome do cliente"];
                 if (!nome || nome.toLowerCase().includes("total")) return;
 
-                let exp = getCol(row, "experiencia").toLowerCase();
-                let feedback = getCol(row, "feedback");
-                
-                let info = {
-                    nome: nome,
-                    bairro: getCol(row, "bairro") || "---",
-                    feedback: feedback || "Nenhum feedback preenchido.",
-                    data: getCol(row, "data") || "---"
-                };
+                let exp = (linha["Experiência "] || linha["Experiência"] || "").toLowerCase();
+                let feedback = linha["Feedback "] || linha["Feedback"] || "Sem feedback registrado.";
+                let bairro = linha["Bairro"] || "---";
 
-                let cor = "#3b82f6"; 
-                let valor = 7;
+                let cor = "#3b82f6"; let valor = 7;
 
-                if (exp.includes("cancel")) { 
-                    cor = "#64748b"; valor = 2; categorias.Cancelado.push(info); 
-                } else if (exp.includes("excelente")) { 
-                    cor = "#10b981"; valor = 10; categorias.Excelente.push(info); 
+                if (exp.includes("excelente")) { 
+                    cor = "#10b981"; valor = 10; grupos.Excelente.push({nome, feedback, bairro}); 
                 } else if (exp.includes("insat") || exp.includes("ruim")) { 
-                    cor = "#ef4444"; valor = 4; categorias.Insatisfeito.push(info); 
+                    cor = "#ef4444"; valor = 4; grupos.Insatisfeito.push({nome, feedback, bairro}); 
+                } else if (exp.includes("cancel")) { 
+                    cor = "#64748b"; valor = 2; grupos.Cancelado.push({nome, feedback, bairro}); 
                 } else { 
-                    categorias.Bom.push(info); 
+                    grupos.Bom.push({nome, feedback, bairro}); 
                 }
 
-                if (feedback && feedback.length > 3) comFeedback++;
-                
-                categorias.Todos.push(info);
-                baseDeDados.push({ nome, cor, valor, feedback: info.feedback, data: info.data });
+                grupos.Todos.push({nome, feedback, bairro});
+                dadosClientes.push({ nome, cor, valor, feedback });
             });
 
-            document.getElementById("totalClientes").innerText = categorias.Todos.length;
-            document.getElementById("countExcelente").innerText = categorias.Excelente.length;
-            document.getElementById("countBom").innerText = categorias.Bom.length;
-            document.getElementById("countInsatisfeito").innerText = categorias.Insatisfeito.length;
-            document.getElementById("countCancelado").innerText = categorias.Cancelado.length;
-            document.getElementById("totalVisitas").innerText = comFeedback;
+            // Atualiza KPIs
+            document.getElementById("t_total").innerText = grupos.Todos.length;
+            document.getElementById("t_exc").innerText = grupos.Excelente.length;
+            document.getElementById("t_bom").innerText = grupos.Bom.length;
+            document.getElementById("t_ins").innerText = grupos.Insatisfeito.length;
+            document.getElementById("t_can").innerText = grupos.Cancelado.length;
+            document.getElementById("labelTotal").innerText = grupos.Todos.length;
 
-            renderizar();
+            // Ajusta largura do gráfico para caber todos os 83
+            const larguraNecessaria = dadosClientes.length * 50; 
+            document.getElementById("canvasWrapper").style.minWidth = larguraNecessaria + "px";
+
+            renderizarGrafico();
         }
 
-        function renderizar() {
-            const ctx = document.getElementById("clienteChart").getContext("2d");
-            if (chartRef) chartRef.destroy();
-            chartRef = new Chart(ctx, {
+        function renderizarGrafico() {
+            const ctx = document.getElementById('meuGrafico').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: baseDeDados.map(d => d.nome),
-                    datasets: [{ data: baseDeDados.map(d => d.valor), backgroundColor: baseDeDados.map(d => d.cor), borderRadius: 2 }]
+                    labels: dadosClientes.map(d => d.nome),
+                    datasets: [{
+                        data: dadosClientes.map(d => d.valor),
+                        backgroundColor: dadosClientes.map(d => d.cor),
+                        borderRadius: 4
+                    }]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false,
-                    scales: { 
-                        y: { display: false, max: 12 }, 
-                        x: { ticks: { color: '#94a3b8', font: { size: 8 }, maxRotation: 90, autoSkip: false } } 
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { display: false, max: 12 },
+                        x: { ticks: { color: '#94a3b8', font: { size: 10 }, maxRotation: 90, autoSkip: false } }
                     },
                     plugins: { legend: { display: false } },
                     onClick: (e, el) => {
                         if (el.length > 0) {
-                            const d = baseDeDados[el[0].index];
-                            openModal(d.nome, `<p><b>Data:</b> ${d.data}</p><p>${d.feedback}</p>`);
+                            const d = dadosClientes[el[0].index];
+                            abrirModal(d.nome, `<p style='font-size:16px; line-height:1.6;'>${d.feedback}</p>`);
                         }
                     }
                 }
             });
         }
 
-        function showCategory(cat) {
-            const lista = categorias[cat];
+        function abrirCategoria(cat) {
+            const lista = grupos[cat];
             let html = "";
-            lista.forEach(i => {
-                html += `<div class="cliente-item"><strong>${i.nome}</strong><p>📍 Bairro: ${i.bairro}</p></div>`;
+            lista.forEach(c => {
+                html += `<div class="item-lista"><strong>${c.nome}</strong><br><small>Bairro: ${c.bairro}</small><p style="margin-top:8px; font-size:13px; color:#cbd5e1;">${c.feedback}</p></div>`;
             });
-            openModal("Lista: " + cat, html || "<p style='text-align:center'>Nenhum registro.</p>");
+            abrirModal("Lista: " + cat, html);
         }
 
-        function openModal(titulo, conteudo) {
-            document.getElementById("modalTitle").innerText = titulo;
-            document.getElementById("modalBody").innerHTML = conteudo;
+        function abrirModal(titulo, conteudo) {
+            document.getElementById("modalTitulo").innerText = titulo;
+            document.getElementById("modalCorpo").innerHTML = conteudo;
             document.getElementById("modal").style.display = "block";
         }
 
-        function closeModal() { document.getElementById("modal").style.display = "none"; }
+        function fecharModal() { document.getElementById("modal").style.display = "none"; }
+        window.onclick = (e) => { if (e.target.className === 'modal') fecharModal(); }
     </script>
 </body>
 </html>
