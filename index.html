@@ -138,6 +138,8 @@
                     feedback: feedback || "Sem feedback registrado.",
                     data: formatarDataBR(getVal(["Data", "DATA"])),
                     responsavel: getVal(["Responsável", "Responsavel"]) || "---",
+                    endereco: getVal(["Endereco", "Endereço"]) || "---",
+                    numero: getVal(["Número", "Numero"]) || "---",
                     bairro: getVal(["Bairro"]) || "---",
                     celular: getVal(["Celular"]) || "---",
                     cpf: getVal(["CPF"]) || "---",
@@ -215,12 +217,12 @@
             `);
         }
 
-        // Função para mostrar os dados específicos do cliente (Responsável, Bairro, Celular, CPF, Abertura)
         function showClientData(info) {
             openModal(info.fantasia, `
                 <div class="info-grid">
                     <p><b>Responsável:</b> ${info.responsavel}</p>
                     <p><b>Bairro:</b> ${info.bairro}</p>
+                    <p><b>Endereço:</b> ${info.endereco}, ${info.numero}</p>
                     <p><b>Celular:</b> ${info.celular}</p>
                     <p><b>CPF:</b> ${info.cpf}</p>
                     <p><b>Abertura:</b> ${info.abertura}</p>
@@ -232,7 +234,6 @@
             const lista = listasPorCategoria[cat];
             let html = "";
             lista.forEach((i, index) => {
-                // Se for a categoria 'Todos', habilitamos o clique para ver detalhes
                 if (cat === 'Todos') {
                     html += `
                         <div class="cliente-item-detalhe" onclick='showClientData(${JSON.stringify(i).replace(/'/g, "&apos;")})'>
