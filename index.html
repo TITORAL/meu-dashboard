@@ -87,7 +87,7 @@
         let baseDeDados = [];
         let listasPorCategoria = { Todos: [], Excelente: [], Bom: [], Insatisfeito: [], Cancelado: [] };
 
-        const URL_PLANILHA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTXkZKTd9HAXueZgAFruapogaLr7t5418U7JhDoSG60attaTbbKqIN5oahDXieJHjMgnnl4T_f4i_wV/pub?output=csv"; 
+        const URL_PLANILHA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRLMRik-fVqpkumGCnTayN7EuWM7naaE_yCV2RFuyvuJwKli5XdBUDCq6-vu5xcPXZ5g0qLqSWU3ZGX/pub?output=csv"; 
 
         window.onload = () => {
             fetch(URL_PLANILHA).then(res => res.text()).then(csv => {
