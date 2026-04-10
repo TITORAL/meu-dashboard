@@ -88,7 +88,7 @@
         let baseDeDados = [];
         let listasPorCategoria = { Todos: [], Excelente: [], Bom: [], Insatisfeito: [], Cancelado: [] };
 
-        // Certifique-se de que a planilha está publicada como CSV
+        // URL da sua planilha publicada
         const URL_PLANILHA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRLMRik-fVqpkumGCnTayN7EuWM7naaE_yCV2RFuyvuJwKli5XdBUDCq6-vu5xcPXZ5g0qLqSWU3ZGX/pub?output=csv"; 
 
         window.onload = () => {
@@ -99,7 +99,6 @@
                         header: true, 
                         skipEmptyLines: true,
                         complete: (r) => {
-                            console.log("Dados Brutos:", r.data[0]); // Para conferir os nomes das colunas no console
                             processar(r.data);
                         }
                     });
@@ -113,50 +112,64 @@
             let visitasCount = 0;
 
             dados.forEach(row => {
-                // Normalização básica para encontrar as colunas mesmo com acentos
                 const getVal = (names) => {
-                    for (let n of names) if (row[n]) return row[n];
+                    for (let n of names) {
+                        let val = row[n] || row[n.trim()] || row[n.toUpperCase()] || row[n.toLowerCase()];
+                        if (val !== undefined && val !== null) return val.toString().trim();
+                    }
                     return "";
                 };
 
-                let fantasia = getVal(["Fantasia", "FANTASIA"]);
+                // No seu xlsx a coluna principal é "Cliente" (ou Fantasia)
+                let fantasia = getVal(["Cliente", "Fantasia", "FANTASIA"]);
                 if (!fantasia || fantasia.toLowerCase().includes("total")) return;
 
-                let exp = getVal(["Experiencia", "Experiência", "EXPERIENCIA"]).toLowerCase();
-                let feedback = getVal(["Feedback", "FEEDBACK"]) || "Sem feedback registrado.";
+                let feedback = getVal(["Feedback ", "Feedback", "FEEDBACK"]);
+                let experiencia = getVal(["Experiência ", "Experiencia", "EXPERIENCIA"]).toLowerCase();
 
                 let info = {
                     fantasia: fantasia,
-                    nomeCliente: getVal(["Nome do cliente", "Nome", "CLIENTE"]) || "---",
+                    nomeCliente: fantasia, // Usando Fantasia como nome principal
                     endereco: getVal(["Endereco", "Endereço"]) || "---",
-                    numero: getVal(["Numero", "Número"]) || "---",
+                    numero: getVal(["Número", "Numero"]) || "---",
                     bairro: getVal(["Bairro"]) || "---",
-                    celular: getVal(["Celular", "Telefone"]) || "---",
-                    cpf: getVal(["CPF", "CNPJ"]) || "---",
-                    feedback: feedback,
-                    experiencia: exp,
+                    celular: getVal(["Celular"]) || "---",
+                    cpf: getVal(["CPF"]) || "---",
+                    feedback: feedback || "Sem feedback.",
+                    experiencia: experiencia || "Não classificado",
                     data: getVal(["Data", "DATA"]) || "---"
                 };
 
-                visitasCount++;
-                let cor = "#3b82f6"; 
-                let valor = 7;
+                // REGRA 1: Card Clientes - Trazer todos os clientes da lista
+                listasPorCategoria.Todos.push(info);
 
-                if (exp.includes("exce")) { 
-                    cor = "#10b981"; valor = 10; listasPorCategoria.Excelente.push(info); 
-                } else if (exp.includes("insat") || exp.includes("ruim")) { 
-                    cor = "#ef4444"; valor = 4; listasPorCategoria.Insatisfeito.push(info); 
-                } else if (exp.includes("canc")) { 
-                    cor = "#64748b"; valor = 2; listasPorCategoria.Cancelado.push(info); 
-                } else { 
-                    listasPorCategoria.Bom.push(info); 
+                // REGRA 2: Card Visitas - Contar apenas se a coluna Feedback NÃO estiver vazia
+                if (feedback && feedback.length > 3) {
+                    visitasCount++;
                 }
 
-                listasPorCategoria.Todos.push(info);
-                baseDeDados.push({ ...info, cor, valor });
+                // REGRA 3: Separar por Experiência para os KPIs
+                let cor = "#3b82f6"; // Azul padrão para "Bom" ou sem classificação
+                let valorGrafico = 6;
+
+                if (experiencia.includes("exce")) { 
+                    cor = "#10b981"; valorGrafico = 10; 
+                    listasPorCategoria.Excelente.push(info); 
+                } else if (experiencia.includes("insat") || experiencia.includes("ruim")) { 
+                    cor = "#ef4444"; valorGrafico = 4; 
+                    listasPorCategoria.Insatisfeito.push(info); 
+                } else if (experiencia.includes("canc")) { 
+                    cor = "#64748b"; valorGrafico = 2; 
+                    listasPorCategoria.Cancelado.push(info); 
+                } else if (experiencia.includes("bom")) {
+                    listasPorCategoria.Bom.push(info);
+                }
+
+                // Dados para o gráfico (apenas quem tem feedback/visita ou todos conforme sua preferência)
+                baseDeDados.push({ ...info, cor, valor: valorGrafico });
             });
 
-            // Atualiza KPIs
+            // Atualização dos Cards (KPIs)
             document.getElementById("totalClientes").innerText = listasPorCategoria.Todos.length;
             document.getElementById("countExcelente").innerText = listasPorCategoria.Excelente.length;
             document.getElementById("countBom").innerText = listasPorCategoria.Bom.length;
@@ -171,13 +184,16 @@
             const ctx = document.getElementById("clienteChart").getContext("2d");
             if (chartRef) chartRef.destroy();
             
+            // Filtramos para o gráfico apenas os que tiveram visita/feedback para não poluir
+            const dadosGrafico = baseDeDados.filter(d => d.feedback !== "Sem feedback.");
+
             chartRef = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: baseDeDados.map(d => d.fantasia),
+                    labels: dadosGrafico.map(d => d.fantasia),
                     datasets: [{ 
-                        data: baseDeDados.map(d => d.valor), 
-                        backgroundColor: baseDeDados.map(d => d.cor),
+                        data: dadosGrafico.map(d => d.valor), 
+                        backgroundColor: dadosGrafico.map(d => d.cor),
                         borderRadius: 4
                     }]
                 },
@@ -191,7 +207,7 @@
                     plugins: { legend: { display: false } },
                     onClick: (e, el) => {
                         if (el.length > 0) {
-                            const d = baseDeDados[el[0].index];
+                            const d = dadosGrafico[el[0].index];
                             showDetails(d);
                         }
                     }
@@ -202,14 +218,13 @@
         function showDetails(d) {
             openModal(d.fantasia, `
                 <div class="info-grid">
-                    <p><b>Nome do Cliente:</b> ${d.nomeCliente}</p>
                     <p><b>Endereço:</b> ${d.endereco}, ${d.numero}</p>
                     <p><b>Bairro:</b> ${d.bairro}</p>
-                    <p><b>Celular:</b> ${d.celular} | <b>CPF:</b> ${d.cpf}</p>
+                    <p><b>Contato:</b> ${d.celular}</p>
                     <hr style="border:0; border-top:1px solid #333; margin:15px 0;">
-                    <p><b>Data da Visita:</b> ${d.data}</p>
+                    <p><b>Data:</b> ${d.data}</p>
                     <p><b>Feedback:</b> ${d.feedback}</p>
-                    <p><b>Experiência:</b> <span style="color:${d.cor}">${d.experiencia.toUpperCase()}</span></p>
+                    <p><b>Status Experiência:</b> <span style="color:${d.cor}">${d.experiencia.toUpperCase()}</span></p>
                 </div>
             `);
         }
@@ -219,17 +234,14 @@
             let html = "";
             lista.forEach(i => {
                 html += `
-                    <div class="cliente-item-detalhe">
+                    <div class="cliente-item-detalhe" onclick='showDetails(${JSON.stringify(i).replace(/"/g, '&quot;')})'>
                         <strong>${i.fantasia}</strong>
                         <div class="info-grid">
-                            <span><b>Nome:</b> ${i.nomeCliente}</span><br>
-                            <span><b>Endereço:</b> ${i.endereco}, ${i.numero} - ${i.bairro}</span><br>
-                            <span><b>Celular:</b> ${i.celular}</span><br>
-                            <span><b>Status:</b> ${i.experiencia.toUpperCase()}</span>
+                            <span><b>Bairro:</b> ${i.bairro}</span> | <span><b>Status:</b> ${i.experiencia}</span>
                         </div>
                     </div>`;
             });
-            openModal("Categoria: " + cat, html || "<p style='text-align:center'>Nenhum registro encontrado.</p>");
+            openModal("Lista: " + cat, html || "<p style='text-align:center'>Nenhum registro encontrado nesta categoria.</p>");
         }
 
         function openModal(titulo, conteudo) {
@@ -239,11 +251,7 @@
         }
 
         function closeModal() { document.getElementById("feedbackModal").style.display = "none"; }
-        
-        // Fechar modal ao clicar fora dele
-        window.onclick = (event) => {
-            if (event.target == document.getElementById("feedbackModal")) closeModal();
-        }
+        window.onclick = (event) => { if (event.target == document.getElementById("feedbackModal")) closeModal(); }
     </script>
 </body>
 </html>
