@@ -16,9 +16,9 @@
         
         .container { padding: 12px; max-width: 100%; margin: auto; }
 
-        /* Mobile First KPIs */
+        /* KPIs Grid Ajustado */
         .kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
-        .kpi { background: var(--card); padding: 15px 8px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.2); border-bottom: 3px solid transparent; cursor: pointer; transition: transform 0.1s; }
+        .kpi { background: var(--card); padding: 15px 8px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.2); border-bottom: 3px solid transparent; cursor: pointer; transition: transform 0.1s; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .kpi:active { transform: scale(0.95); }
         .kpi span { font-size: 24px; font-weight: bold; display: block; }
         .label-bottom { font-size: 9px; font-weight: bold; text-transform: uppercase; color: #94a3b8; margin-top: 4px; display: block; }
@@ -28,18 +28,17 @@
         .bom { border-color: var(--blue); color: var(--blue); }
         .insatisfeito { border-color: #ef4444; color: #ef4444; }
         .cancelado { border-color: #64748b; color: #94a3b8; }
+        
+        /* Card Visitas com Estilo Neon */
+        .visitas-kpi { border-color: var(--blue); color: var(--blue); }
+        .visitas-num-neon { text-shadow: 0 0 5px #fff, 0 0 10px #fff; }
 
         .main-content { display: flex; flex-direction: column; gap: 12px; }
         .card-feedback { background: var(--card); padding: 12px; border-radius: 12px; min-height: 380px; }
         
-        /* Gráfico com Scroll Lateral Mobile */
         .chart-container { width: 100%; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
         .chart-wrapper { height: 320px; min-width: 800px; } 
 
-        .visitas-card { background: var(--card); padding: 20px; border-radius: 12px; text-align: center; border-left: 4px solid var(--blue); }
-        .visitas-num { font-size: 45px; font-weight: bold; color: var(--blue); display: block; }
-
-        /* Modal Mobile Otimizado */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); }
         .modal-content { background: var(--card); margin: 10% auto; padding: 20px; width: 85%; max-height: 80vh; border-radius: 15px; border: 1px solid var(--blue); position: relative; overflow-y: auto; }
         .close-btn { position: absolute; right: 15px; top: 10px; font-size: 30px; cursor: pointer; color: #94a3b8; padding: 5px; }
@@ -49,8 +48,7 @@
         .info-grid p { margin: 8px 0; font-size: 14px; color: #cbd5e1; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px; }
 
         @media (min-width: 768px) {
-            .kpis { grid-template-columns: repeat(5, 1fr); }
-            .main-content { display: grid; grid-template-columns: 1fr 280px; }
+            .kpis { grid-template-columns: repeat(6, 1fr); }
             .chart-wrapper { min-width: 100%; } 
             .titulo-header { font-size: 16px; }
         }
@@ -66,6 +64,7 @@
             <div class="kpi bom" onclick="showCategory('Bom')"><span id="countBom">0</span><strong class="label-bottom">Bom</strong></div>
             <div class="kpi insatisfeito" onclick="showCategory('Insatisfeito')"><span id="countInsatisfeito">0</span><strong class="label-bottom">Insatisfeito</strong></div>
             <div class="kpi cancelado" onclick="showCategory('Cancelado')"><span id="countCancelado">0</span><strong class="label-bottom">Cancelados</strong></div>
+            <div class="kpi visitas-kpi"><span id="totalVisitas" class="visitas-num-neon">0</span><strong class="label-bottom">Visitas</strong></div>
         </div>
 
         <div class="main-content">
@@ -74,10 +73,6 @@
                     <div class="chart-wrapper"><canvas id="clienteChart"></canvas></div>
                 </div>
                 <p style="font-size: 10px; color: #64748b; text-align: center; margin-top: 10px;">Arraste para o lado para ver mais clientes</p>
-            </div>
-            <div class="visitas-card">
-                <strong style="font-size: 10px; color: #94a3b8; text-transform: uppercase;">Visitas Concluídas</strong>
-                <span id="totalVisitas" class="visitas-num">0</span>
             </div>
         </div>
     </div>
