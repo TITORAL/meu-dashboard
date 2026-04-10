@@ -29,7 +29,7 @@
         .card-feedback { background: var(--card); padding: 15px; border-radius: 12px; display: flex; flex-direction: column; min-height: 420px; }
         
         .chart-container { width: 100%; flex-grow: 1; min-height: 350px; overflow-x: auto; overflow-y: hidden; }
-        .chart-wrapper { height: 100%; min-width: 4500px; position: relative; padding-bottom: 20px; } 
+        .chart-wrapper { height: 100%; min-width: 2500px; position: relative; padding-bottom: 20px; } 
 
         .visitas-card { background: var(--card); padding: 20px; border-radius: 12px; text-align: center; border-left: 4px solid var(--blue); }
         .visitas-num { font-size: 50px; font-weight: bold; color: var(--blue); display: block; }
@@ -87,7 +87,6 @@
         let baseDeDados = [];
         let listasPorCategoria = { Todos: [], Excelente: [], Bom: [], Insatisfeito: [], Cancelado: [] };
 
-        // URL da sua planilha publicada como CSV
         const URL_PLANILHA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTXkZKTd9HAXueZgAFruapogaLr7t5418U7JhDoSG60attaTbbKqIN5oahDXieJHjMgnnl4T_f4i_wV/pub?output=csv"; 
 
         window.onload = () => {
@@ -95,7 +94,7 @@
                 Papa.parse(csv, { 
                     header: true, 
                     skipEmptyLines: true,
-                    transformHeader: (h) => h.trim().normalize("NFD").replace(/[\u0300-\u036f]/g, ""), // Limpa espaços e acentos dos títulos
+                    transformHeader: (h) => h.trim().normalize("NFD").replace(/[\u0300-\u036f]/g, ""),
                     complete: (r) => processar(r.data) 
                 });
             });
@@ -126,8 +125,12 @@
                     data: row["Data"] || "---"
                 };
 
+                // Contabiliza visitas concluídas (todas as linhas válidas)
+                visitasCount++;
+
                 let cor = "#3b82f6"; let valor = 7;
 
+                // Lógica de Categorização por Experiência
                 if (exp.includes("excelente")) { 
                     cor = "#10b981"; valor = 10; listasPorCategoria.Excelente.push(info); 
                 } else if (exp.includes("insat") || exp.includes("ruim")) { 
@@ -135,11 +138,10 @@
                 } else if (exp.includes("cancel")) { 
                     cor = "#64748b"; valor = 2; listasPorCategoria.Cancelado.push(info); 
                 } else { 
+                    // Considera "Bom" como padrão se não for as outras
                     listasPorCategoria.Bom.push(info); 
                 }
 
-                if (feedback.length > 5 && !feedback.toLowerCase().includes("sem feedback")) visitasCount++;
-                
                 listasPorCategoria.Todos.push(info);
                 baseDeDados.push({ ...info, cor, valor });
             });
@@ -150,11 +152,6 @@
             document.getElementById("countInsatisfeito").innerText = listasPorCategoria.Insatisfeito.length;
             document.getElementById("countCancelado").innerText = listasPorCategoria.Cancelado.length;
             document.getElementById("totalVisitas").innerText = visitasCount;
-
-            // Se for mobile, garante o scroll largo para 83 clientes
-            if(window.innerWidth < 768) {
-                document.getElementById("graficoScroll").style.minWidth = "4500px";
-            }
 
             renderizarGrafico();
         }
@@ -195,6 +192,7 @@
                     <hr style="border:0; border-top:1px solid #333; margin:15px 0;">
                     <p><b>Data:</b> ${d.data}</p>
                     <p><b>Feedback:</b> ${d.feedback}</p>
+                    <p><b>Experiência:</b> ${d.experiencia.toUpperCase()}</p>
                 </div>
             `);
         }
@@ -209,20 +207,10 @@
                         <div class="info-grid">
                             <span><b>Nome:</b> ${i.nomeCliente}</span><br>
                             <span><b>Endereço:</b> ${i.endereco}, ${i.numero} - ${i.bairro}</span><br>
-                            <span><b>Celular:</b> ${i.celular}</span> | <span><b>CPF:</b> ${i.cpf}</span>
+                            <span><b>Celular:</b> ${i.celular}</span> | <span><b>CPF:</b> ${i.cpf}</span><br>
+                            <span><b>Exp:</b> ${i.experiencia.toUpperCase()}</span>
                         </div>
                     </div>`;
             });
             openModal("Lista: " + cat, html || "<p style='text-align:center'>Nenhum registro encontrado.</p>");
         }
-
-        function openModal(titulo, conteudo) {
-            document.getElementById("modalTitle").innerText = titulo;
-            document.getElementById("modalBody").innerHTML = conteudo;
-            document.getElementById("feedbackModal").style.display = "block";
-        }
-
-        function closeModal() { document.getElementById("feedbackModal").style.display = "none"; }
-    </script>
-</body>
-</html>
