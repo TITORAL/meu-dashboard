@@ -39,9 +39,8 @@
         .modal-content { background: var(--card); margin: 5% auto; padding: 20px; width: 90%; max-width: 800px; max-height: 90vh; border-radius: 15px; border: 1px solid var(--blue); position: relative; overflow-y: auto; }
         .close-btn { position: absolute; right: 15px; top: 10px; font-size: 28px; cursor: pointer; color: #64748b; }
         
-        .cliente-item-detalhe { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid var(--blue); line-height: 1.5; }
-        .cliente-item-detalhe strong { color: var(--blue); font-size: 16px; display: block; margin-bottom: 5px; }
-        .info-grid { font-size: 13px; color: #cbd5e1; }
+        .cliente-item-detalhe { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid var(--blue); }
+        .cliente-item-detalhe strong { color: var(--text); font-size: 15px; display: block; }
 
         @media (min-width: 768px) {
             .kpis { grid-template-columns: repeat(5, 1fr); gap: 12px; }
@@ -105,13 +104,10 @@
 
         function formatarDataBR(dataStr) {
             if (!dataStr || dataStr === "---") return "---";
-            // Tenta lidar com formatos AAAA-MM-DD ou DD/MM/AAAA
             const partes = dataStr.split(/[-/]/);
             if (partes.length === 3) {
-                if (partes[0].length === 4) { // ISO AAAA-MM-DD
-                    return `${partes[2]}/${partes[1]}/${partes[0]}`;
-                }
-                return `${partes[0]}/${partes[1]}/${partes[2]}`; // Já em DD/MM/AAAA
+                if (partes[0].length === 4) return `${partes[2]}/${partes[1]}/${partes[0]}`;
+                return `${partes[0]}/${partes[1]}/${partes[2]}`;
             }
             return dataStr;
         }
@@ -140,15 +136,10 @@
                 let info = {
                     fantasia: fantasia,
                     feedback: feedback || "Sem feedback registrado.",
-                    experiencia: expOriginal || "Não classificado",
-                    data: formatarDataBR(getVal(["Data", "DATA"])),
-                    // Mantemos os campos abaixo ocultos no gráfico, mas disponíveis para a lista de categorias
-                    bairro: getVal(["Bairro"]) || "---",
-                    celular: getVal(["Celular"]) || "---"
+                    data: formatarDataBR(getVal(["Data", "DATA"]))
                 };
 
                 listasPorCategoria.Todos.push(info);
-
                 if (feedback && feedback.length > 3) visitasCount++;
 
                 let cor = "#3b82f6"; 
@@ -211,7 +202,6 @@
             });
         }
 
-        // Modal exclusivo para cliques no gráfico (Limpo conforme pedido)
         function showDetailsGrafico(d) {
             openModal(d.fantasia, `
                 <div class="info-grid">
@@ -222,7 +212,7 @@
             `);
         }
 
-        // Modal para as listas dos cards (Mantém informações de contato para utilidade)
+        // Card de categorias: Exibe apenas o NOME do cliente conforme solicitado
         function showCategory(cat) {
             const lista = listasPorCategoria[cat];
             let html = "";
@@ -230,10 +220,6 @@
                 html += `
                     <div class="cliente-item-detalhe">
                         <strong>${i.fantasia}</strong>
-                        <div class="info-grid">
-                            <span><b>Data:</b> ${i.data}</span> | <span><b>Bairro:</b> ${i.bairro}</span><br>
-                            <span><b>Status:</b> ${i.experiencia}</span>
-                        </div>
                     </div>`;
             });
             openModal("Lista: " + cat, html || "<p style='text-align:center'>Nenhum registro encontrado.</p>");
