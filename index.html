@@ -37,8 +37,8 @@
         .chart-container { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .chart-wrapper { height: 320px; min-width: 800px; } 
 
-        /* Card Visitas - Desktop vira lateral, Mobile some para entrar no grid */
-        .visitas-card-desktop { display: none; background: var(--card); padding: 20px; border-radius: 12px; text-align: center; border-left: 4px solid var(--blue); justify-content: center; flex-direction: column; }
+        /* Card Visitas Lateral (Desktop) */
+        .visitas-card-desktop { background: var(--card); padding: 20px; border-radius: 12px; text-align: center; border-left: 4px solid var(--blue); display: flex; flex-direction: column; justify-content: center; min-height: 150px; }
         .visitas-num-large { font-size: 45px; font-weight: bold; display: block; }
 
         /* Modal */
@@ -51,8 +51,8 @@
 
         /* Responsividade */
         @media (max-width: 767px) {
-            /* No mobile o card de visitas entra no grid junto com os outros */
             .visitas-mobile-only { display: block !important; border-color: var(--blue); }
+            .visitas-card-desktop { display: none !important; } /* Esconde o lateral no mobile */
         }
 
         @media (min-width: 768px) {
@@ -86,7 +86,6 @@
                 <div class="chart-container">
                     <div class="chart-wrapper"><canvas id="clienteChart"></canvas></div>
                 </div>
-                <p style="font-size: 10px; color: #64748b; text-align: center; margin-top: 10px;">Arraste para o lado para ver mais clientes</p>
             </div>
             
             <div class="visitas-card-desktop">
@@ -174,7 +173,6 @@
             document.getElementById("countInsatisfeito").innerText = listasPorCategoria.Insatisfeito.length;
             document.getElementById("countCancelado").innerText = listasPorCategoria.Cancelado.length;
             
-            // Atualiza os dois contadores de visitas (Mob e Desk)
             document.getElementById("totalVisitasMob").innerText = visitasCount;
             document.getElementById("totalVisitasDesk").innerText = visitasCount;
 
