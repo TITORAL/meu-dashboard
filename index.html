@@ -149,20 +149,22 @@
                 listasPorCategoria.Todos.push(info);
                 if (feedback && feedback.length > 3) visitasCount++;
 
-                let cor = "#3b82f6"; 
-                let valorGrafico = 6;
+                // Lógica de classificação: só entra nas categorias se 'expOriginal' não estiver vazio
+                if (expOriginal !== "") {
+                    let cor = "#3b82f6"; 
+                    let valorGrafico = 6;
 
-                if (expLimpa.includes("exce")) { 
-                    cor = "#10b981"; valorGrafico = 10; listasPorCategoria.Excelente.push(info); 
-                } else if (expLimpa.includes("insat") || expLimpa.includes("ruim")) { 
-                    cor = "#ef4444"; valorGrafico = 4; listasPorCategoria.Insatisfeito.push(info); 
-                } else if (expLimpa.includes("canc")) { 
-                    cor = "#64748b"; valorGrafico = 2; listasPorCategoria.Cancelado.push(info); 
-                } else {
-                    listasPorCategoria.Bom.push(info);
+                    if (expLimpa.includes("exce")) { 
+                        cor = "#10b981"; valorGrafico = 10; listasPorCategoria.Excelente.push(info); 
+                    } else if (expLimpa.includes("insat") || expLimpa.includes("ruim")) { 
+                        cor = "#ef4444"; valorGrafico = 4; listasPorCategoria.Insatisfeito.push(info); 
+                    } else if (expLimpa.includes("canc")) { 
+                        cor = "#64748b"; valorGrafico = 2; listasPorCategoria.Cancelado.push(info); 
+                    } else {
+                        listasPorCategoria.Bom.push(info);
+                    }
+                    baseDeDados.push({ ...info, cor, valor: valorGrafico });
                 }
-
-                baseDeDados.push({ ...info, cor, valor: valorGrafico });
             });
 
             document.getElementById("totalClientes").innerText = listasPorCategoria.Todos.length;
@@ -233,7 +235,7 @@
         function showCategory(cat) {
             const lista = listasPorCategoria[cat];
             let html = "";
-            lista.forEach((i, index) => {
+            lista.forEach((i) => {
                 if (cat === 'Todos') {
                     html += `
                         <div class="cliente-item-detalhe" onclick='showClientData(${JSON.stringify(i).replace(/'/g, "&apos;")})'>
