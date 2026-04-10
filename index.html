@@ -9,16 +9,19 @@
 
     <style>
         :root { --bg: #0b1f3a; --card: #142a52; --blue: #3b82f6; --text: #f8fafc; }
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
-        .header { background: #08162c; padding: 12px; text-align: center; border-bottom: 3px solid var(--blue); position: sticky; top: 0; z-index: 100; }
-        .titulo-header { font-size: 16px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
-        .container { padding: 10px; max-width: 1600px; margin: auto; }
+        body { margin: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
+        
+        .header { background: #08162c; padding: 15px; text-align: center; border-bottom: 3px solid var(--blue); position: sticky; top: 0; z-index: 100; }
+        .titulo-header { font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .container { padding: 12px; max-width: 100%; margin: auto; }
 
-        .kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 15px; }
-        .kpi { background: var(--card); padding: 12px 5px; border-radius: 10px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); border-bottom: 3px solid transparent; cursor: pointer; transition: 0.3s; }
-        .kpi:hover { background: #1e3a6d; }
-        .kpi span { font-size: 26px; font-weight: bold; display: block; }
-        .label-bottom { font-size: 10px; font-weight: bold; text-transform: uppercase; color: #94a3b8; margin-top: 4px; display: block; }
+        /* Mobile First KPIs */
+        .kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
+        .kpi { background: var(--card); padding: 15px 8px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.2); border-bottom: 3px solid transparent; cursor: pointer; transition: transform 0.1s; }
+        .kpi:active { transform: scale(0.95); }
+        .kpi span { font-size: 24px; font-weight: bold; display: block; }
+        .label-bottom { font-size: 9px; font-weight: bold; text-transform: uppercase; color: #94a3b8; margin-top: 4px; display: block; }
 
         .total { border-color: #fff; }
         .excelente { border-color: #10b981; color: #10b981; }
@@ -27,25 +30,29 @@
         .cancelado { border-color: #64748b; color: #94a3b8; }
 
         .main-content { display: flex; flex-direction: column; gap: 12px; }
-        .card-feedback { background: var(--card); padding: 15px; border-radius: 12px; display: flex; flex-direction: column; min-height: 420px; }
+        .card-feedback { background: var(--card); padding: 12px; border-radius: 12px; min-height: 380px; }
         
-        .chart-container { width: 100%; flex-grow: 1; min-height: 350px; overflow-x: auto; }
-        .chart-wrapper { height: 100%; min-width: 1200px; position: relative; } 
+        /* Gráfico com Scroll Lateral Mobile */
+        .chart-container { width: 100%; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
+        .chart-wrapper { height: 320px; min-width: 800px; } 
 
-        .visitas-card { background: var(--card); padding: 20px; border-radius: 12px; text-align: center; border-left: 4px solid var(--blue); display: flex; flex-direction: column; justify-content: center; }
-        .visitas-num { font-size: 50px; font-weight: bold; color: var(--blue); display: block; }
+        .visitas-card { background: var(--card); padding: 20px; border-radius: 12px; text-align: center; border-left: 4px solid var(--blue); }
+        .visitas-num { font-size: 45px; font-weight: bold; color: var(--blue); display: block; }
 
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(4px); }
-        .modal-content { background: var(--card); margin: 5% auto; padding: 20px; width: 90%; max-width: 800px; max-height: 90vh; border-radius: 15px; border: 1px solid var(--blue); position: relative; overflow-y: auto; }
-        .close-btn { position: absolute; right: 15px; top: 10px; font-size: 28px; cursor: pointer; color: #64748b; }
+        /* Modal Mobile Otimizado */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); }
+        .modal-content { background: var(--card); margin: 10% auto; padding: 20px; width: 85%; max-height: 80vh; border-radius: 15px; border: 1px solid var(--blue); position: relative; overflow-y: auto; }
+        .close-btn { position: absolute; right: 15px; top: 10px; font-size: 30px; cursor: pointer; color: #94a3b8; padding: 5px; }
         
-        .cliente-item-detalhe { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid var(--blue); cursor: pointer; }
+        .cliente-item-detalhe { background: rgba(255,255,255,0.05); padding: 14px; border-radius: 10px; margin-bottom: 10px; border-left: 4px solid var(--blue); }
         .cliente-item-detalhe strong { color: var(--text); font-size: 15px; display: block; }
+        .info-grid p { margin: 8px 0; font-size: 14px; color: #cbd5e1; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 4px; }
 
         @media (min-width: 768px) {
-            .kpis { grid-template-columns: repeat(5, 1fr); gap: 12px; }
+            .kpis { grid-template-columns: repeat(5, 1fr); }
             .main-content { display: grid; grid-template-columns: 1fr 280px; }
             .chart-wrapper { min-width: 100%; } 
+            .titulo-header { font-size: 16px; }
         }
     </style>
 </head>
@@ -66,6 +73,7 @@
                 <div class="chart-container">
                     <div class="chart-wrapper"><canvas id="clienteChart"></canvas></div>
                 </div>
+                <p style="font-size: 10px; color: #64748b; text-align: center; margin-top: 10px;">Arraste para o lado para ver mais clientes</p>
             </div>
             <div class="visitas-card">
                 <strong style="font-size: 10px; color: #94a3b8; text-transform: uppercase;">Visitas Concluídas</strong>
@@ -77,7 +85,7 @@
     <div id="feedbackModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal()">&times;</span>
-            <h2 id="modalTitle" style="color:var(--blue); font-size:18px; border-bottom:1px solid #333; padding-bottom:10px; margin-bottom:15px;"></h2>
+            <h2 id="modalTitle" style="color:var(--blue); font-size:16px; border-bottom:1px solid #333; padding-bottom:10px; margin-bottom:15px; padding-right: 30px;"></h2>
             <div id="modalBody"></div>
         </div>
     </div>
@@ -117,7 +125,6 @@
             listasPorCategoria = { Todos: [], Excelente: [], Bom: [], Insatisfeito: [], Cancelado: [] };
             let visitasCount = 0;
 
-            // Ordenar dados alfabeticamente pelo nome do cliente/fantasia
             dados.sort((a, b) => {
                 let nameA = (a["Cliente"] || a["Fantasia"] || "").toString().toUpperCase();
                 let nameB = (b["Cliente"] || b["Fantasia"] || "").toString().toUpperCase();
@@ -159,16 +166,10 @@
                 if (expOriginal !== "") {
                     let cor = "#3b82f6"; 
                     let valorGrafico = 6;
-
-                    if (expLimpa.includes("exce")) { 
-                        cor = "#10b981"; valorGrafico = 10; listasPorCategoria.Excelente.push(info); 
-                    } else if (expLimpa.includes("insat") || expLimpa.includes("ruim")) { 
-                        cor = "#ef4444"; valorGrafico = 4; listasPorCategoria.Insatisfeito.push(info); 
-                    } else if (expLimpa.includes("canc")) { 
-                        cor = "#64748b"; valorGrafico = 2; listasPorCategoria.Cancelado.push(info); 
-                    } else {
-                        listasPorCategoria.Bom.push(info);
-                    }
+                    if (expLimpa.includes("exce")) { cor = "#10b981"; valorGrafico = 10; listasPorCategoria.Excelente.push(info); }
+                    else if (expLimpa.includes("insat") || expLimpa.includes("ruim")) { cor = "#ef4444"; valorGrafico = 4; listasPorCategoria.Insatisfeito.push(info); }
+                    else if (expLimpa.includes("canc")) { cor = "#64748b"; valorGrafico = 2; listasPorCategoria.Cancelado.push(info); }
+                    else { listasPorCategoria.Bom.push(info); }
                     baseDeDados.push({ ...info, cor, valor: valorGrafico });
                 }
             });
@@ -179,7 +180,6 @@
             document.getElementById("countInsatisfeito").innerText = listasPorCategoria.Insatisfeito.length;
             document.getElementById("countCancelado").innerText = listasPorCategoria.Cancelado.length;
             document.getElementById("totalVisitas").innerText = visitasCount;
-
             renderizarGrafico();
         }
 
@@ -191,26 +191,16 @@
                 type: 'bar',
                 data: {
                     labels: dadosComVisita.map(d => d.fantasia),
-                    datasets: [{ 
-                        data: dadosComVisita.map(d => d.valor), 
-                        backgroundColor: dadosComVisita.map(d => d.cor),
-                        borderRadius: 4
-                    }]
+                    datasets: [{ data: dadosComVisita.map(d => d.valor), backgroundColor: dadosComVisita.map(d => d.cor), borderRadius: 4 }]
                 },
                 options: {
-                    responsive: true, 
-                    maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false,
                     scales: { 
                         y: { beginAtZero: true, max: 12, ticks: { display: false }, grid: { display: false } }, 
-                        x: { ticks: { color: '#94a3b8', font: { size: 9 }, maxRotation: 45 } } 
+                        x: { ticks: { color: '#94a3b8', font: { size: 10 }, maxRotation: 45, minRotation: 45 } } 
                     },
                     plugins: { legend: { display: false } },
-                    onClick: (e, el) => {
-                        if (el.length > 0) {
-                            const d = dadosComVisita[el[0].index];
-                            showDetailsGrafico(d);
-                        }
-                    }
+                    onClick: (e, el) => { if (el.length > 0) showDetailsGrafico(dadosComVisita[el[0].index]); }
                 }
             });
         }
@@ -218,8 +208,7 @@
         function showDetailsGrafico(d) {
             openModal(d.fantasia, `
                 <div class="info-grid">
-                    <p style="font-size:15px; line-height:1.6;"><b>Feedback:</b><br>${d.feedback}</p>
-                    <hr style="border:0; border-top:1px solid #333; margin:15px 0;">
+                    <p style="font-size:14px; line-height:1.5; color:#fff;"><b>Feedback:</b><br>${d.feedback}</p>
                     <p><b>Data da Visita:</b> ${d.data}</p>
                 </div>
             `);
@@ -242,19 +231,10 @@
             const lista = listasPorCategoria[cat];
             let html = "";
             lista.forEach((i) => {
-                if (cat === 'Todos') {
-                    html += `
-                        <div class="cliente-item-detalhe" onclick='showClientData(${JSON.stringify(i).replace(/'/g, "&apos;")})'>
-                            <strong>${i.fantasia}</strong>
-                        </div>`;
-                } else {
-                    html += `
-                        <div class="cliente-item-detalhe">
-                            <strong>${i.fantasia}</strong>
-                        </div>`;
-                }
+                const clickAttr = cat === 'Todos' ? `onclick='showClientData(${JSON.stringify(i).replace(/'/g, "&apos;")})'` : "";
+                html += `<div class="cliente-item-detalhe" ${clickAttr}><strong>${i.fantasia}</strong></div>`;
             });
-            openModal("Lista: " + cat, html || "<p style='text-align:center'>Nenhum registro encontrado.</p>");
+            openModal("Lista: " + cat, html || "<p style='text-align:center'>Nenhum registro.</p>");
         }
 
         function openModal(titulo, conteudo) {
