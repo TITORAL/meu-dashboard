@@ -36,7 +36,7 @@
         .visitas-num { font-size: 50px; font-weight: bold; color: var(--blue); display: block; }
 
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(4px); }
-        .modal-content { background: var(--card); margin: 2% auto; padding: 20px; width: 90%; max-width: 800px; max-height: 90vh; border-radius: 15px; border: 1px solid var(--blue); position: relative; overflow-y: auto; }
+        .modal-content { background: var(--card); margin: 5% auto; padding: 20px; width: 90%; max-width: 800px; max-height: 90vh; border-radius: 15px; border: 1px solid var(--blue); position: relative; overflow-y: auto; }
         .close-btn { position: absolute; right: 15px; top: 10px; font-size: 28px; cursor: pointer; color: #64748b; }
         
         .cliente-item-detalhe { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid var(--blue); line-height: 1.5; }
@@ -88,7 +88,6 @@
         let baseDeDados = [];
         let listasPorCategoria = { Todos: [], Excelente: [], Bom: [], Insatisfeito: [], Cancelado: [] };
 
-        // URL da sua planilha publicada
         const URL_PLANILHA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRLMRik-fVqpkumGCnTayN7EuWM7naaE_yCV2RFuyvuJwKli5XdBUDCq6-vu5xcPXZ5g0qLqSWU3ZGX/pub?output=csv"; 
 
         window.onload = () => {
@@ -98,13 +97,24 @@
                     Papa.parse(csv, { 
                         header: true, 
                         skipEmptyLines: true,
-                        complete: (r) => {
-                            processar(r.data);
-                        }
+                        complete: (r) => { processar(r.data); }
                     });
                 })
                 .catch(err => console.error("Erro ao carregar planilha:", err));
         };
+
+        function formatarDataBR(dataStr) {
+            if (!dataStr || dataStr === "---") return "---";
+            // Tenta lidar com formatos AAAA-MM-DD ou DD/MM/AAAA
+            const partes = dataStr.split(/[-/]/);
+            if (partes.length === 3) {
+                if (partes[0].length === 4) { // ISO AAAA-MM-DD
+                    return `${partes[2]}/${partes[1]}/${partes[0]}`;
+                }
+                return `${partes[0]}/${partes[1]}/${partes[2]}`; // Já em DD/MM/AAAA
+            }
+            return dataStr;
+        }
 
         function processar(dados) {
             baseDeDados = [];
@@ -114,62 +124,49 @@
             dados.forEach(row => {
                 const getVal = (names) => {
                     for (let n of names) {
-                        let val = row[n] || row[n.trim()] || row[n.toUpperCase()] || row[n.toLowerCase()];
+                        let val = row[n] || row[n.trim()];
                         if (val !== undefined && val !== null) return val.toString().trim();
                     }
                     return "";
                 };
 
-                // No seu xlsx a coluna principal é "Cliente" (ou Fantasia)
-                let fantasia = getVal(["Cliente", "Fantasia", "FANTASIA"]);
+                let fantasia = getVal(["Cliente", "Fantasia"]);
                 if (!fantasia || fantasia.toLowerCase().includes("total")) return;
 
-                let feedback = getVal(["Feedback ", "Feedback", "FEEDBACK"]);
-                let experiencia = getVal(["Experiência ", "Experiencia", "EXPERIENCIA"]).toLowerCase();
+                let feedback = getVal(["Feedback ", "Feedback"]);
+                let expOriginal = getVal(["Experiência ", "Experiencia"]);
+                let expLimpa = expOriginal.toLowerCase();
 
                 let info = {
                     fantasia: fantasia,
-                    nomeCliente: fantasia, // Usando Fantasia como nome principal
-                    endereco: getVal(["Endereco", "Endereço"]) || "---",
-                    numero: getVal(["Número", "Numero"]) || "---",
+                    feedback: feedback || "Sem feedback registrado.",
+                    experiencia: expOriginal || "Não classificado",
+                    data: formatarDataBR(getVal(["Data", "DATA"])),
+                    // Mantemos os campos abaixo ocultos no gráfico, mas disponíveis para a lista de categorias
                     bairro: getVal(["Bairro"]) || "---",
-                    celular: getVal(["Celular"]) || "---",
-                    cpf: getVal(["CPF"]) || "---",
-                    feedback: feedback || "Sem feedback.",
-                    experiencia: experiencia || "Não classificado",
-                    data: getVal(["Data", "DATA"]) || "---"
+                    celular: getVal(["Celular"]) || "---"
                 };
 
-                // REGRA 1: Card Clientes - Trazer todos os clientes da lista
                 listasPorCategoria.Todos.push(info);
 
-                // REGRA 2: Card Visitas - Contar apenas se a coluna Feedback NÃO estiver vazia
-                if (feedback && feedback.length > 3) {
-                    visitasCount++;
-                }
+                if (feedback && feedback.length > 3) visitasCount++;
 
-                // REGRA 3: Separar por Experiência para os KPIs
-                let cor = "#3b82f6"; // Azul padrão para "Bom" ou sem classificação
+                let cor = "#3b82f6"; 
                 let valorGrafico = 6;
 
-                if (experiencia.includes("exce")) { 
-                    cor = "#10b981"; valorGrafico = 10; 
-                    listasPorCategoria.Excelente.push(info); 
-                } else if (experiencia.includes("insat") || experiencia.includes("ruim")) { 
-                    cor = "#ef4444"; valorGrafico = 4; 
-                    listasPorCategoria.Insatisfeito.push(info); 
-                } else if (experiencia.includes("canc")) { 
-                    cor = "#64748b"; valorGrafico = 2; 
-                    listasPorCategoria.Cancelado.push(info); 
-                } else if (experiencia.includes("bom")) {
+                if (expLimpa.includes("exce")) { 
+                    cor = "#10b981"; valorGrafico = 10; listasPorCategoria.Excelente.push(info); 
+                } else if (expLimpa.includes("insat") || expLimpa.includes("ruim")) { 
+                    cor = "#ef4444"; valorGrafico = 4; listasPorCategoria.Insatisfeito.push(info); 
+                } else if (expLimpa.includes("canc")) { 
+                    cor = "#64748b"; valorGrafico = 2; listasPorCategoria.Cancelado.push(info); 
+                } else {
                     listasPorCategoria.Bom.push(info);
                 }
 
-                // Dados para o gráfico (apenas quem tem feedback/visita ou todos conforme sua preferência)
                 baseDeDados.push({ ...info, cor, valor: valorGrafico });
             });
 
-            // Atualização dos Cards (KPIs)
             document.getElementById("totalClientes").innerText = listasPorCategoria.Todos.length;
             document.getElementById("countExcelente").innerText = listasPorCategoria.Excelente.length;
             document.getElementById("countBom").innerText = listasPorCategoria.Bom.length;
@@ -184,16 +181,15 @@
             const ctx = document.getElementById("clienteChart").getContext("2d");
             if (chartRef) chartRef.destroy();
             
-            // Filtramos para o gráfico apenas os que tiveram visita/feedback para não poluir
-            const dadosGrafico = baseDeDados.filter(d => d.feedback !== "Sem feedback.");
+            const dadosComVisita = baseDeDados.filter(d => d.feedback !== "Sem feedback registrado.");
 
             chartRef = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: dadosGrafico.map(d => d.fantasia),
+                    labels: dadosComVisita.map(d => d.fantasia),
                     datasets: [{ 
-                        data: dadosGrafico.map(d => d.valor), 
-                        backgroundColor: dadosGrafico.map(d => d.cor),
+                        data: dadosComVisita.map(d => d.valor), 
+                        backgroundColor: dadosComVisita.map(d => d.cor),
                         borderRadius: 4
                     }]
                 },
@@ -207,41 +203,40 @@
                     plugins: { legend: { display: false } },
                     onClick: (e, el) => {
                         if (el.length > 0) {
-                            const d = dadosGrafico[el[0].index];
-                            showDetails(d);
+                            const d = dadosComVisita[el[0].index];
+                            showDetailsGrafico(d);
                         }
                     }
                 }
             });
         }
 
-        function showDetails(d) {
+        // Modal exclusivo para cliques no gráfico (Limpo conforme pedido)
+        function showDetailsGrafico(d) {
             openModal(d.fantasia, `
                 <div class="info-grid">
-                    <p><b>Endereço:</b> ${d.endereco}, ${d.numero}</p>
-                    <p><b>Bairro:</b> ${d.bairro}</p>
-                    <p><b>Contato:</b> ${d.celular}</p>
+                    <p style="font-size:15px; line-height:1.6;"><b>Feedback:</b><br>${d.feedback}</p>
                     <hr style="border:0; border-top:1px solid #333; margin:15px 0;">
-                    <p><b>Data:</b> ${d.data}</p>
-                    <p><b>Feedback:</b> ${d.feedback}</p>
-                    <p><b>Status Experiência:</b> <span style="color:${d.cor}">${d.experiencia.toUpperCase()}</span></p>
+                    <p><b>Data da Visita:</b> ${d.data}</p>
                 </div>
             `);
         }
 
+        // Modal para as listas dos cards (Mantém informações de contato para utilidade)
         function showCategory(cat) {
             const lista = listasPorCategoria[cat];
             let html = "";
             lista.forEach(i => {
                 html += `
-                    <div class="cliente-item-detalhe" onclick='showDetails(${JSON.stringify(i).replace(/"/g, '&quot;')})'>
+                    <div class="cliente-item-detalhe">
                         <strong>${i.fantasia}</strong>
                         <div class="info-grid">
-                            <span><b>Bairro:</b> ${i.bairro}</span> | <span><b>Status:</b> ${i.experiencia}</span>
+                            <span><b>Data:</b> ${i.data}</span> | <span><b>Bairro:</b> ${i.bairro}</span><br>
+                            <span><b>Status:</b> ${i.experiencia}</span>
                         </div>
                     </div>`;
             });
-            openModal("Lista: " + cat, html || "<p style='text-align:center'>Nenhum registro encontrado nesta categoria.</p>");
+            openModal("Lista: " + cat, html || "<p style='text-align:center'>Nenhum registro encontrado.</p>");
         }
 
         function openModal(titulo, conteudo) {
