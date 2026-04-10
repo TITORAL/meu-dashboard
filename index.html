@@ -214,3 +214,14 @@
             });
             openModal("Lista: " + cat, html || "<p style='text-align:center'>Nenhum registro encontrado.</p>");
         }
+
+        function openModal(titulo, conteudo) {
+            document.getElementById("modalTitle").innerText = titulo;
+            document.getElementById("modalBody").innerHTML = conteudo;
+            document.getElementById("feedbackModal").style.display = "block";
+        }
+
+        function closeModal() { document.getElementById("feedbackModal").style.display = "none"; }
+    </script>
+</body>
+</html>
