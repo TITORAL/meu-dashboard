@@ -27,7 +27,6 @@
         .insatisfeito { border-color: #ef4444; color: #ef4444; }
         .cancelado { border-color: #64748b; color: #94a3b8; }
         
-        /* Neon Suave Ajustado */
         .neon-text { filter: drop-shadow(0 0 3px rgba(255,255,255,0.4)); color: var(--blue); }
 
         .main-content { display: flex; flex-direction: column; gap: 12px; }
@@ -113,7 +112,12 @@
         function formatarDataBR(dataStr) {
             if (!dataStr || dataStr === "---") return "---";
             const partes = dataStr.split(/[-/]/);
-            if (partes.length === 3) return partes[0].length === 4 ? `${partes[2]}/${partes[1]}/${partes[0]}` : `${partes[0]}/${partes[1]}/${partes[2]}`;
+            if (partes.length === 3) {
+                // Se o primeiro item tiver 4 dígitos, é YYYY-MM-DD
+                if (partes[0].length === 4) return `${partes[2]}/${partes[1]}/${partes[0]}`;
+                // Senão, assume que já está próximo do formato ou é DD-MM-YYYY
+                return `${partes[0]}/${partes[1]}/${partes[2]}`;
+            }
             return dataStr;
         }
 
@@ -160,7 +164,6 @@
                 }
             });
 
-            // Ordenação Alfabética A-Z para todas as listas
             const sortFn = (a, b) => a.fantasia.localeCompare(b.fantasia);
             Object.keys(listasPorCategoria).forEach(k => listasPorCategoria[k].sort(sortFn));
             baseDeDados.sort(sortFn);
@@ -189,7 +192,7 @@
                         data: df.map(d => d.valor), 
                         backgroundColor: df.map(d => d.cor), 
                         borderRadius: 4,
-                        barPercentage: 0.6, // Torna as colunas mais finas
+                        barPercentage: 0.6,
                         categoryPercentage: 0.8
                     }]
                 },
@@ -205,8 +208,9 @@
             });
         }
 
+        // AJUSTE REALIZADO AQUI: A data exibida agora usa o formato brasileiro (dia/mês/ano)
         function showDetailsGrafico(d) {
-            openModal(d.fantasia, `<p style="font-size:14px; line-height:1.5;"><b>Feedback:</b><br>${d.feedback}</p><p><b>Data:</b> ${d.data}</p>`);
+            openModal(d.fantasia, `<p style="font-size:14px; line-height:1.5;"><b>Feedback:</b><br>${d.feedback}</p><p><b>Data da Visita:</b> ${d.data}</p>`);
         }
 
         function showClientData(info) {
