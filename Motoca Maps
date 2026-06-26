@@ -1,0 +1,117 @@
+import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+
+void main() => runApp(const MotocaMapsApp());
+
+class MotocaMapsApp extends StatelessWidget {
+  const MotocaMapsApp({Key? key}) : super(key: key);
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Motoca Maps', debugShowCheckedModeBanner: false,
+      theme: ThemeData(primaryColor: Colors.black, scaffoldBackgroundColor: const Color(0xFF121212)),
+      home: const ListaRotasScreen(),
+    );
+  }
+}
+
+class Entrega {
+  final String id; final String endereco; bool concluida;
+  Entrega({required this.id, required this.endereco, this.concluida = false});
+}
+
+class ListaRotasScreen extends StatefulWidget {
+  const ListaRotasScreen({Key? key}) : super(key: key);
+  @override
+  State<ListaRotasScreen> createState() => _ListaRotasScreenState();
+}
+
+class _ListaRotasScreenState extends State<ListaRotasScreen> {
+  final ImagePicker _picker = ImagePicker();
+  final TextRecognizer _textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
+  
+  List<Entrega> minhasEntregas = [
+    Entrega(id: '1', endereco: 'Av. Gil Veloso, 1200 - Praia da Costa, Vila Velha - ES'),
+    Entrega(id: '2', endereco: 'Ria Santa Lúcia, 450 - Centro, Vila Velha - ES'),
+  ];
+
+  Future<void> _escanearNota() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+    if (image == null) return;
+    final inputImage = InputImage.fromFilePath(image.path);
+    final RecognizedText recognizedText = await _textRecognizer.processImage(inputImage);
+    setState(() {
+      minhasEntregas.add(Entrega(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        endereco: _filtrarEndereco(recognizedText.text),
+      ));
+    });
+  }
+
+  String _filtrarEndereco(String texto) {
+    List<String> linhas = texto.split('\n');
+    List<String> padroes = ['rua', 'av.', 'avenida', 'alameda', 'r.', 'bairro', 'cep'];
+    for (var l in linhas) {
+      String lClean = l.toLowerCase().trim();
+      if (padroes.any((p) => lClean.contains(p))) return l.trim();
+    }
+    return texto.length > 50 ? texto.substring(0, 50) : texto.trim();
+  }
+
+  void abrirNavegador(String end, String gps) async {
+    final q = Uri.encodeComponent(end);
+    final url = Uri.parse(gps == 'waze' ? 'https://waze.com/ul?q=$q&navigate=yes' : 'http://googleusercontent.com/maps.google.com/4');
+    if (await canLaunchUrl(url)) { await launchUrl(url, mode: LaunchMode.externalApplication); }
+  }
+
+  void mostrarOpcoes(String end) {
+    showModalBottomSheet(
+      context: context, backgroundColor: Colors.black,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(15))),
+      builder: (_) => SafeArea(child: Wrap(children: [
+        const ListTile(title: Text('Navegar com qual GPS?', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white))),
+        ListTile(leading: const Icon(Icons.map, color: Colors.blue), title: const Text('Google Maps', style: TextStyle(color: Colors.white)), onTap: () { Navigator.pop(context); abrirNavegador(end, 'google'); }),
+        ListTile(leading: const Icon(Icons.navigation, color: Colors.green), title: const Text('Waze', style: TextStyle(color: Colors.white)), onTap: () { Navigator.pop(context); abrirNavegador(end, 'waze'); }),
+      ])),
+    );
+  }
+
+  @override
+  void dispose() { _textRecognizer.close(); super.dispose(); }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Motoca Maps', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)), 
+        backgroundColor: Colors.black, centerTitle: true,
+        actions: [IconButton(icon: const Icon(Icons.add_a_photo, color: Colors.white), onPressed: _escanearNota)],
+      ),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(12), itemCount: minhasEntregas.length,
+        itemBuilder: (context, index) {
+          final e = minhasEntregas[index];
+          return AnimatedOpacity(
+            duration: const Duration(milliseconds: 200), opacity: e.concluida ? 0.25 : 1.0,
+            child: Card(
+              color: e.concluida ? Colors.grey[900] : Colors.grey[850], margin: const EdgeInsets.symmetric(vertical: 6),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                title: Text('ROTA ${index + 1}', style: TextStyle(color: e.concluida ? Colors.grey : Colors.orangeAccent, fontWeight: FontWeight.bold)),
+                subtitle: Padding(padding: const EdgeInsets.only(top: 4), child: Text(e.endereco, style: const TextStyle(color: Colors.white, fontSize: 13))),
+                trailing: IconButton(
+                  icon: Icon(e.concluida ? Icons.check_circle : Icons.circle_outlined, color: e.concluida ? Colors.grey : Colors.greenAccent, size: 26),
+                  onPressed: () => setState(() => e.concluida = !e.concluida),
+                ),
+                onTap: e.concluida ? null : () => mostrarOpcoes(e.endereco),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
